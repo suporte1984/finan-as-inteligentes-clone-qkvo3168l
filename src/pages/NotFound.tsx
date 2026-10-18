@@ -1,25 +1,28 @@
-/* 404 Page - Displays when a user attempts to access a non-existent route - translate to the language of the user */
-import { useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { ArrowLeft, FileQuestion, WalletCards } from 'lucide-react'
 
-const NotFound = () => {
-  const location = useLocation()
-
-  useEffect(() => {
-    console.error('404 Error: User attempted to access non-existent route:', location.pathname)
-  }, [location.pathname])
-
+export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
+    <main className="grid min-h-screen place-items-center bg-fin-sidebar px-5">
+      <div className="w-full max-w-md text-center">
+        <span className="mx-auto mb-6 grid h-12 w-12 place-items-center rounded-2xl bg-fin-text text-white">
+          <WalletCards className="h-5 w-5" />
+        </span>
+        <div className="fin-card p-8">
+          <FileQuestion className="mx-auto h-11 w-11 text-fin-primary" />
+          <p className="mt-5 text-xs font-bold uppercase tracking-[.14em] text-fin-primary">
+            Erro 404
+          </p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight">Página não encontrada</h1>
+          <p className="mt-3 text-sm leading-6 text-fin-muted">
+            O endereço pode estar incorreto ou a página pode ter sido movida.
+          </p>
+          <Link to="/" className="btn-primary mt-7 w-full">
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao início
+          </Link>
+        </div>
       </div>
-    </div>
+    </main>
   )
 }
-
-export default NotFound

@@ -1,17 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
+  ArrowDownRight,
+  ArrowUpRight,
   ChevronLeft,
   ChevronRight,
   Download,
   FileText,
+  Filter,
   MoreHorizontal,
   Paperclip,
   Pencil,
   Plus,
+  Scale,
   Search,
   SlidersHorizontal,
   Trash2,
+  Wallet,
   X,
 } from 'lucide-react'
 
@@ -212,6 +217,38 @@ export default function TransactionsPage() {
 
   const hasFilters = Boolean(query || category || parentFilter || account || month || start || end)
 
+  // Totais gerais do usuário autenticado (referência fixa independente dos filtros)
+  const generalTotals = useMemo(() => {
+    let income = 0
+    let expense = 0
+    for (const t of transactions) {
+      if (t.type === 'receita') income += t.amount
+      else if (t.type === 'despesa') expense += t.amount
+    }
+    return {
+      income,
+      expense,
+      balance: income - expense,
+      count: transactions.length,
+    }
+  }, [transactions])
+
+  // Totais dinâmicos calculados estritamente sobre os lançamentos filtrados
+  const filteredTotals = useMemo(() => {
+    let income = 0
+    let expense = 0
+    for (const t of filtered) {
+      if (t.type === 'receita') income += t.amount
+      else if (t.type === 'despesa') expense += t.amount
+    }
+    return {
+      income,
+      expense,
+      balance: income - expense,
+      count: filtered.length,
+    }
+  }, [filtered])
+
   return (
     <div className="space-y-6 page-container">
       <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end animate-fade-up">
@@ -257,6 +294,125 @@ export default function TransactionsPage() {
           </button>
         </div>
       </header>
+
+      {/* Resumo de Totais: Geral e Filtrados */}
+      <section className="space-y-3 animate-fade-up stagger-1">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Card 1: Valor Total Geral (todos os lançamentos do usuário autenticado) */}
+          <article className="fin-card relative overflow-hidden p-4 sm:p-5 border-indigo-200/80 bg-gradient-to-br from-indigo-50/50 via-white to-white shadow-xs">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-900/80">
+                Valor Total Geral
+              </span>
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-100 text-indigo-700">
+                <Wallet className="h-4 w-4" />
+              </span>
+            </div>
+            <p className="mt-3 text-2xl font-extrabold tracking-tight text-indigo-950 sm:text-[26px]">
+              {loading ? '—' : brl.format(generalTotals.balance)}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-1 text-[11px] text-fin-muted">
+              <span>
+                {generalTotals.count} lançamento{generalTotals.count === 1 ? '' : 's'} no total
+              </span>
+              <span className="font-medium text-indigo-700">Geral do usuário</span>
+            </div>
+          </article>
+
+          {/* Card 2: Receitas Filtradas */}
+          <article className="fin-card p-4 sm:p-5 border-emerald-200/80 bg-gradient-to-br from-emerald-50/40 via-white to-white shadow-xs">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-900/80">
+                Receitas (filtradas)
+              </span>
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-100 text-emerald-800">
+                <ArrowUpRight className="h-4 w-4" />
+              </span>
+            </div>
+            <p className="mt-3 text-2xl font-extrabold tracking-tight text-emerald-800 sm:text-[26px]">
+              {loading ? '—' : brl.format(filteredTotals.income)}
+            </p>
+            <div className="mt-2 flex items-center justify-between text-[11px] text-fin-muted">
+              <span>Entradas consideradas</span>
+              {hasFilters && (
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
+                  <Filter className="h-3 w-3" /> filtrado
+                </span>
+              )}
+            </div>
+          </article>
+
+          {/* Card 3: Despesas Filtradas */}
+          <article className="fin-card p-4 sm:p-5 border-rose-200/80 bg-gradient-to-br from-rose-50/40 via-white to-white shadow-xs">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-rose-900/80">
+                Despesas (filtradas)
+              </span>
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-rose-100 text-rose-800">
+                <ArrowDownRight className="h-4 w-4" />
+              </span>
+            </div>
+            <p className="mt-3 text-2xl font-extrabold tracking-tight text-rose-800 sm:text-[26px]">
+              {loading ? '—' : brl.format(filteredTotals.expense)}
+            </p>
+            <div className="mt-2 flex items-center justify-between text-[11px] text-fin-muted">
+              <span>Saídas consideradas</span>
+              {hasFilters && (
+                <span className="inline-flex items-center gap-1 font-semibold text-rose-700">
+                  <Filter className="h-3 w-3" /> filtrado
+                </span>
+              )}
+            </div>
+          </article>
+
+          {/* Card 4: Saldo Filtrado (Receitas - Despesas) */}
+          <article
+            className={cn(
+              'fin-card p-4 sm:p-5 shadow-xs transition-colors',
+              filteredTotals.balance > 0 &&
+                'border-emerald-200/80 bg-gradient-to-br from-emerald-50/30 via-white to-white',
+              filteredTotals.balance < 0 &&
+                'border-rose-200/80 bg-gradient-to-br from-rose-50/30 via-white to-white',
+              filteredTotals.balance === 0 &&
+                'border-fin-border bg-gradient-to-br from-slate-50 via-white to-white',
+            )}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-fin-text/80">
+                Saldo (filtrado)
+              </span>
+              <span
+                className={cn(
+                  'grid h-8 w-8 place-items-center rounded-lg',
+                  filteredTotals.balance > 0 && 'bg-emerald-100 text-emerald-800',
+                  filteredTotals.balance < 0 && 'bg-rose-100 text-rose-800',
+                  filteredTotals.balance === 0 && 'bg-slate-200 text-slate-700',
+                )}
+              >
+                <Scale className="h-4 w-4" />
+              </span>
+            </div>
+            <p
+              className={cn(
+                'mt-3 text-2xl font-extrabold tracking-tight sm:text-[26px]',
+                filteredTotals.balance > 0 && 'text-emerald-800',
+                filteredTotals.balance < 0 && 'text-rose-800',
+                filteredTotals.balance === 0 && 'text-fin-text',
+              )}
+            >
+              {loading
+                ? '—'
+                : `${filteredTotals.balance > 0 ? '+' : ''}${brl.format(filteredTotals.balance)}`}
+            </p>
+            <div className="mt-2 flex items-center justify-between text-[11px] text-fin-muted">
+              <span>Receitas − Despesas</span>
+              <span className="font-medium">
+                {filteredTotals.count} {filteredTotals.count === 1 ? 'item' : 'itens'}
+              </span>
+            </div>
+          </article>
+        </div>
+      </section>
 
       <div className="flex border-b border-fin-border animate-fade-up stagger-1">
         {(

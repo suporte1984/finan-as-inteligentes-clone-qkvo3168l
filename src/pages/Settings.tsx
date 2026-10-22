@@ -661,7 +661,7 @@ export default function SettingsPage() {
                   type="button"
                   onClick={() => void handleTestReminders()}
                   disabled={testingEmail}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-fin-border bg-white px-3.5 py-2 text-xs font-medium text-fin-text transition hover:bg-fin-surface hover:text-fin-primary disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-fin-border bg-white px-3.5 py-2 text-xs font-medium text-fin-text transition hover:bg-fin-surface hover:text-fin-primary disabled:opacity-50 text-[#020202]"
                 >
                   {testingEmail ? (
                     <>
@@ -815,7 +815,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={() => void loadHistory()}
                 disabled={loadingHistory}
-                className="inline-flex items-center gap-2 rounded-xl border border-fin-border bg-white px-3 py-1.5 text-xs font-medium text-fin-text hover:bg-fin-surface disabled:opacity-50 self-start sm:self-auto"
+                className="inline-flex items-center gap-2 rounded-xl border border-fin-border bg-white px-3 py-1.5 text-xs font-medium text-fin-text hover:bg-fin-surface disabled:opacity-50 self-start sm:self-auto text-[#000000]"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${loadingHistory ? 'animate-spin' : ''}`} />
                 Atualizar histórico

@@ -826,13 +826,11 @@ function KpiCard({
   }[type]
 
   return (
-    <article
-      className={cn('fin-card print-card p-5 transition hover:shadow-md', typeStyles.cardBg)}
-    >
+    <article className="text-[#56b7c3] bg-[#119abd] inline-block border-hidden">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className={cn('h-2 w-2 rounded-full shrink-0', typeStyles.accentDot)} />
-          <p className={cn('text-xs uppercase tracking-wide', typeStyles.labelColor)}>{title}</p>
+          <p className="text-[#2f2f2f]">{title}</p>
         </div>
         <span
           className={cn(
@@ -851,14 +849,7 @@ function KpiCard({
           {variation.toFixed(1)}%
         </span>
       </div>
-      <p
-        className={cn(
-          'mt-3 text-[26px] font-extrabold tracking-tight sm:text-[28px]',
-          typeStyles.numColor,
-        )}
-      >
-        {brl.format(value)}
-      </p>
+      <p className="text-[#262626]">{brl.format(value)}</p>
       <p className="mt-1.5 text-[11px] font-medium text-fin-muted">{subtitle}</p>
     </article>
   )

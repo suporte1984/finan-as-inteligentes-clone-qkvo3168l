@@ -74,16 +74,18 @@ export function CategoryModal({
   }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-fin-border sm:max-w-md">
+      <DialogContent className="border-fin-border sm:max-w-md dark:border-white/10 dark:bg-gradient-to-br dark:from-indigo-950/35 dark:via-[#111726] dark:to-[#0c121e] dark:text-slate-100">
         <DialogHeader>
-          <DialogTitle>{category ? 'Editar categoria' : 'Nova categoria'}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-fin-text dark:text-slate-100">
+            {category ? 'Editar categoria' : 'Nova categoria'}
+          </DialogTitle>
+          <DialogDescription className="text-fin-muted dark:text-slate-400">
             Use categorias e subcategorias para entender para onde vai seu dinheiro.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4 pt-2">
           <label className="block space-y-1.5">
-            <span className="text-[13px] font-medium">Nome</span>
+            <span className="text-[13px] font-medium text-fin-text dark:text-slate-200">Nome</span>
             <input
               className="field"
               value={form.name}
@@ -94,7 +96,9 @@ export function CategoryModal({
           </label>
           <div className="grid grid-cols-2 gap-4">
             <label className="block space-y-1.5">
-              <span className="text-[13px] font-medium">Tipo</span>
+              <span className="text-[13px] font-medium text-fin-text dark:text-slate-200">
+                Tipo
+              </span>
               <select
                 className="field"
                 value={form.type}
@@ -107,7 +111,9 @@ export function CategoryModal({
               </select>
             </label>
             <label className="block space-y-1.5">
-              <span className="text-[13px] font-medium">Categoria-mãe</span>
+              <span className="text-[13px] font-medium text-fin-text dark:text-slate-200">
+                Categoria-mãe
+              </span>
               <select
                 className="field"
                 value={form.parent}
@@ -123,7 +129,7 @@ export function CategoryModal({
             </label>
           </div>
           <div>
-            <span className="text-[13px] font-medium">Cor</span>
+            <span className="text-[13px] font-medium text-fin-text dark:text-slate-200">Cor</span>
             <div className="mt-2 flex gap-2">
               {colors.map((color) => (
                 <button
@@ -138,7 +144,11 @@ export function CategoryModal({
               ))}
             </div>
           </div>
-          {message && <p className="rounded-lg bg-red-50 p-3 text-sm text-fin-danger">{message}</p>}
+          {message && (
+            <p className="rounded-lg bg-red-50 p-3 text-sm text-fin-danger dark:bg-rose-950/40 dark:border dark:border-rose-500/30 dark:text-rose-300">
+              {message}
+            </p>
+          )}
           <button type="submit" className="btn-primary w-full" disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             {saving ? 'Salvando...' : 'Salvar categoria'}

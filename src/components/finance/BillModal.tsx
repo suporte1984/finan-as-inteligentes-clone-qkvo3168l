@@ -98,22 +98,24 @@ export function BillModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-fin-border sm:max-w-[560px]">
+      <DialogContent className="border-fin-border sm:max-w-[560px] dark:border-white/10 dark:bg-gradient-to-br dark:from-indigo-950/35 dark:via-[#111726] dark:to-[#0c121e] dark:text-slate-100">
         <DialogHeader>
-          <DialogTitle>{bill ? 'Editar conta' : 'Nova conta a pagar ou receber'}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-fin-text dark:text-slate-100">
+            {bill ? 'Editar conta' : 'Nova conta a pagar ou receber'}
+          </DialogTitle>
+          <DialogDescription className="text-fin-muted dark:text-slate-400">
             Organize compromissos e não perca nenhum vencimento.
           </DialogDescription>
         </DialogHeader>
         <form className="space-y-4 pt-2" onSubmit={submit}>
-          <div className="grid grid-cols-2 rounded-xl bg-fin-surface p-1">
+          <div className="grid grid-cols-2 rounded-xl bg-fin-surface p-1 dark:bg-[#131a29]/90 dark:border dark:border-white/10">
             <button
               type="button"
               onClick={() => {
                 set('direction', 'pagar')
                 set('category', '')
               }}
-              className={`rounded-lg py-2.5 text-sm font-semibold ${form.direction === 'pagar' ? 'bg-white text-fin-danger shadow-sm' : 'text-fin-muted'}`}
+              className={`rounded-lg py-2.5 text-sm font-semibold transition ${form.direction === 'pagar' ? 'bg-white text-fin-danger shadow-sm dark:bg-[#1f293d] dark:text-rose-400' : 'text-fin-muted dark:text-slate-400 hover:text-fin-text dark:hover:text-slate-200'}`}
             >
               A pagar
             </button>
@@ -123,7 +125,7 @@ export function BillModal({
                 set('direction', 'receber')
                 set('category', '')
               }}
-              className={`rounded-lg py-2.5 text-sm font-semibold ${form.direction === 'receber' ? 'bg-white text-fin-success shadow-sm' : 'text-fin-muted'}`}
+              className={`rounded-lg py-2.5 text-sm font-semibold transition ${form.direction === 'receber' ? 'bg-white text-fin-success shadow-sm dark:bg-[#1f293d] dark:text-emerald-400' : 'text-fin-muted dark:text-slate-400 hover:text-fin-text dark:hover:text-slate-200'}`}
             >
               A receber
             </button>
@@ -198,10 +200,16 @@ export function BillModal({
             </Field>
           )}
           {message && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-fin-danger">{message}</p>
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-fin-danger dark:bg-rose-950/40 dark:border dark:border-rose-500/30 dark:text-rose-300">
+              {message}
+            </p>
           )}
-          <div className="flex justify-end gap-3 border-t border-fin-border pt-4">
-            <button type="button" className="btn-secondary" onClick={() => onOpenChange(false)}>
+          <div className="flex justify-end gap-3 border-t border-fin-border pt-4 dark:border-white/10">
+            <button
+              type="button"
+              className="btn-secondary dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+              onClick={() => onOpenChange(false)}
+            >
               <X className="h-4 w-4" />
               Cancelar
             </button>
@@ -236,9 +244,9 @@ function Field({
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-[13px] font-medium text-fin-text">{label}</span>
+      <span className="text-[13px] font-medium text-fin-text dark:text-slate-200">{label}</span>
       {children}
-      {error && <span className="block text-xs text-fin-danger">{error}</span>}
+      {error && <span className="block text-xs text-fin-danger dark:text-rose-400">{error}</span>}
     </label>
   )
 }

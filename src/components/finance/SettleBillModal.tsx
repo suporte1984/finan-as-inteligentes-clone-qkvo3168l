@@ -55,18 +55,18 @@ export function SettleBillModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-fin-border sm:max-w-md">
+      <DialogContent className="border-fin-border sm:max-w-md dark:border-white/10 dark:bg-gradient-to-br dark:from-indigo-950/35 dark:via-[#111726] dark:to-[#0c121e] dark:text-slate-100">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-fin-text dark:text-slate-100">
             {bill?.direction === 'receber' ? 'Registrar recebimento' : 'Marcar como pago'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-fin-muted dark:text-slate-400">
             Isso criará um lançamento e vinculará a liquidação à conta.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4 pt-2">
           <label className="block space-y-1.5">
-            <span className="text-[13px] font-medium">Conta</span>
+            <span className="text-[13px] font-medium text-fin-text dark:text-slate-200">Conta</span>
             <select
               className="field"
               value={account}
@@ -81,7 +81,7 @@ export function SettleBillModal({
             </select>
           </label>
           <label className="block space-y-1.5">
-            <span className="text-[13px] font-medium">Data</span>
+            <span className="text-[13px] font-medium text-fin-text dark:text-slate-200">Data</span>
             <input
               className="field"
               type="date"
@@ -89,7 +89,11 @@ export function SettleBillModal({
               onChange={(event) => setDate(event.target.value)}
             />
           </label>
-          {message && <p className="rounded-lg bg-red-50 p-3 text-sm text-fin-danger">{message}</p>}
+          {message && (
+            <p className="rounded-lg bg-red-50 p-3 text-sm text-fin-danger dark:bg-rose-950/40 dark:border dark:border-rose-500/30 dark:text-rose-300">
+              {message}
+            </p>
+          )}
           <button type="submit" className="btn-primary w-full" disabled={saving}>
             {saving ? (
               <>

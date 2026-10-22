@@ -138,17 +138,19 @@ export function RecurringModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto border-fin-border sm:max-w-[580px]">
+      <DialogContent className="max-h-[92vh] overflow-y-auto border-fin-border sm:max-w-[580px] dark:border-white/10 dark:bg-gradient-to-br dark:from-indigo-950/35 dark:via-[#111726] dark:to-[#0c121e] dark:text-slate-100">
         <DialogHeader>
-          <DialogTitle>{recurring ? 'Editar recorrência' : 'Nova recorrência'}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-fin-text dark:text-slate-100">
+            {recurring ? 'Editar recorrência' : 'Nova recorrência'}
+          </DialogTitle>
+          <DialogDescription className="text-fin-muted dark:text-slate-400">
             Configure uma transação automática que o sistema lançará todo mês ou período programado.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={submit} className="space-y-4 pt-1">
           {/* Alternador Receita / Despesa */}
-          <div className="grid grid-cols-2 rounded-xl bg-fin-surface p-1">
+          <div className="grid grid-cols-2 rounded-xl bg-fin-surface p-1 dark:bg-[#131a29]/90 dark:border dark:border-white/10">
             {(['receita', 'despesa'] as const).map((t) => (
               <button
                 key={t}
@@ -161,9 +163,9 @@ export function RecurringModal({
                   'rounded-lg px-4 py-2 text-sm font-semibold capitalize transition',
                   form.type === t
                     ? t === 'receita'
-                      ? 'bg-white text-fin-success shadow-sm'
-                      : 'bg-white text-fin-danger shadow-sm'
-                    : 'text-fin-muted',
+                      ? 'bg-white text-fin-success shadow-sm dark:bg-[#1f293d] dark:text-emerald-400'
+                      : 'bg-white text-fin-danger shadow-sm dark:bg-[#1f293d] dark:text-rose-400'
+                    : 'text-fin-muted dark:text-slate-400 hover:text-fin-text dark:hover:text-slate-200',
                 )}
               >
                 {t}
@@ -284,16 +286,18 @@ export function RecurringModal({
             </select>
           </Field>
 
-          <label className="flex items-center gap-3 rounded-xl border border-fin-border bg-fin-surface/40 p-3.5 cursor-pointer">
+          <label className="flex items-center gap-3 rounded-xl border border-fin-border bg-fin-surface/40 p-3.5 cursor-pointer dark:border-white/10 dark:bg-[#131a29]/60">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-fin-border text-fin-primary focus:ring-fin-primary"
+              className="h-4 w-4 rounded border-fin-border text-fin-primary focus:ring-fin-primary dark:border-slate-600 dark:bg-slate-800"
               checked={form.active ?? true}
               onChange={(e) => set('active', e.target.checked)}
             />
             <div>
-              <span className="text-sm font-semibold text-fin-text">Recorrência ativa</span>
-              <p className="text-xs text-fin-muted">
+              <span className="text-sm font-semibold text-fin-text dark:text-slate-200">
+                Recorrência ativa
+              </span>
+              <p className="text-xs text-fin-muted dark:text-slate-400">
                 O cron diário gerará lançamentos automaticamente enquanto esta opção estiver
                 marcada.
               </p>
@@ -301,11 +305,17 @@ export function RecurringModal({
           </label>
 
           {message && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-fin-danger">{message}</p>
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-fin-danger dark:bg-rose-950/40 dark:border dark:border-rose-500/30 dark:text-rose-300">
+              {message}
+            </p>
           )}
 
-          <div className="flex justify-end gap-3 border-t border-fin-border pt-4">
-            <button type="button" className="btn-secondary" onClick={() => onOpenChange(false)}>
+          <div className="flex justify-end gap-3 border-t border-fin-border pt-4 dark:border-white/10">
+            <button
+              type="button"
+              className="btn-secondary dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+              onClick={() => onOpenChange(false)}
+            >
               <X className="h-4 w-4" />
               Cancelar
             </button>
@@ -340,9 +350,9 @@ function Field({
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-[13px] font-medium text-fin-text">{label}</span>
+      <span className="text-[13px] font-medium text-fin-text dark:text-slate-200">{label}</span>
       {children}
-      {error && <span className="block text-xs text-fin-danger">{error}</span>}
+      {error && <span className="block text-xs text-fin-danger dark:text-rose-400">{error}</span>}
     </label>
   )
 }

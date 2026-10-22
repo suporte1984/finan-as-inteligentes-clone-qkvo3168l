@@ -146,17 +146,19 @@ export function CategoryTreeSelect({
           type="button"
           disabled={disabled}
           className={cn(
-            'flex h-10 w-full items-center justify-between rounded-xl border bg-white px-3 py-2 text-left text-sm transition',
-            error ? 'border-fin-danger' : 'border-fin-border',
+            'flex h-10 w-full items-center justify-between rounded-xl border bg-white px-3 py-2 text-left text-sm transition dark:bg-[#121827] dark:border-white/10 dark:hover:border-indigo-500/50',
+            error ? 'border-fin-danger dark:border-rose-500' : 'border-fin-border',
             disabled
-              ? 'opacity-50 cursor-not-allowed bg-fin-surface'
-              : 'hover:border-fin-primary/60 focus:outline-none focus:ring-2 focus:ring-fin-primary/20',
+              ? 'opacity-50 cursor-not-allowed bg-fin-surface dark:bg-[#131a29]'
+              : 'hover:border-fin-primary/60 focus:outline-none focus:ring-2 focus:ring-fin-primary/20 dark:focus:ring-indigo-500/30',
           )}
         >
           <span
             className={cn(
               'flex-1 truncate',
-              selectedCategory ? 'font-medium text-fin-text' : 'text-fin-muted',
+              selectedCategory
+                ? 'font-medium text-fin-text dark:text-slate-100'
+                : 'text-fin-muted dark:text-slate-400',
             )}
           >
             {selectedCategory ? (
@@ -172,7 +174,7 @@ export function CategoryTreeSelect({
             )}
           </span>
 
-          <div className="flex items-center gap-1 pl-2 text-fin-muted">
+          <div className="flex items-center gap-1 pl-2 text-fin-muted dark:text-slate-400">
             {allowClear && selectedCategory && !disabled && (
               <span
                 role="button"
@@ -187,7 +189,7 @@ export function CategoryTreeSelect({
                     onChange('')
                   }
                 }}
-                className="grid h-5 w-5 place-items-center rounded-full hover:bg-zinc-100 hover:text-fin-text"
+                className="grid h-5 w-5 place-items-center rounded-full hover:bg-zinc-100 hover:text-fin-text dark:hover:bg-white/10 dark:hover:text-slate-200"
                 title="Limpar seleção"
               >
                 <X className="h-3 w-3" />
@@ -200,14 +202,14 @@ export function CategoryTreeSelect({
 
       <PopoverContent
         align="start"
-        className="w-[340px] p-2 border-fin-border bg-white shadow-lg rounded-xl sm:w-[420px]"
+        className="w-[340px] p-2 border-fin-border bg-white shadow-lg rounded-xl sm:w-[420px] dark:border-white/10 dark:bg-[#111726] dark:text-slate-100 dark:shadow-2xl"
       >
         {/* Campo de Busca */}
         <div className="relative mb-2">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fin-muted" />
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fin-muted dark:text-slate-400" />
           <input
             type="text"
-            className="w-full rounded-lg border border-fin-border bg-fin-surface pl-8 pr-3 py-1.5 text-xs placeholder:text-fin-muted focus:border-fin-primary focus:bg-white focus:outline-none"
+            className="w-full rounded-lg border border-fin-border bg-fin-surface pl-8 pr-3 py-1.5 text-xs placeholder:text-fin-muted focus:border-fin-primary focus:bg-white focus:outline-none dark:border-white/10 dark:bg-[#131a29] dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:bg-[#121827] dark:focus:border-indigo-400"
             placeholder="Buscar por categoria ou subcategoria..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -217,7 +219,7 @@ export function CategoryTreeSelect({
             <button
               type="button"
               onClick={() => setSearchTerm('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-fin-muted hover:text-fin-text"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-fin-muted hover:text-fin-text dark:text-slate-400 dark:hover:text-slate-200"
             >
               <X className="h-3 w-3" />
             </button>
@@ -227,7 +229,7 @@ export function CategoryTreeSelect({
         {/* Lista hierárquica */}
         <div className="max-h-64 overflow-y-auto space-y-0.5 pr-1">
           {flattenedFiltered.length === 0 ? (
-            <div className="py-6 text-center text-xs text-fin-muted">
+            <div className="py-6 text-center text-xs text-fin-muted dark:text-slate-400">
               Nenhuma categoria encontrada
             </div>
           ) : (
@@ -253,8 +255,8 @@ export function CategoryTreeSelect({
                     isSelected
                       ? 'bg-fin-primary text-white font-semibold'
                       : isRoot
-                        ? 'hover:bg-zinc-100 text-fin-text font-semibold'
-                        : 'hover:bg-zinc-100 text-zinc-700',
+                        ? 'hover:bg-zinc-100 text-fin-text font-semibold dark:hover:bg-white/5 dark:text-slate-100'
+                        : 'hover:bg-zinc-100 text-zinc-700 dark:hover:bg-white/5 dark:text-slate-300',
                   )}
                 >
                   <div className="flex items-center gap-2 min-w-0">
@@ -263,14 +265,14 @@ export function CategoryTreeSelect({
                       <FolderTree
                         className={cn(
                           'h-3.5 w-3.5 shrink-0',
-                          isSelected ? 'text-white' : 'text-fin-primary',
+                          isSelected ? 'text-white' : 'text-fin-primary dark:text-indigo-400',
                         )}
                       />
                     ) : (
                       <span
                         className={cn(
                           'text-xs select-none shrink-0 font-mono',
-                          isSelected ? 'text-white/80' : 'text-zinc-400',
+                          isSelected ? 'text-white/80' : 'text-zinc-400 dark:text-slate-500',
                         )}
                       >
                         ↳
@@ -291,7 +293,7 @@ export function CategoryTreeSelect({
                         <span
                           className={cn(
                             'ml-1.5 text-[10px] font-normal opacity-75',
-                            isSelected ? 'text-white' : 'text-fin-muted',
+                            isSelected ? 'text-white' : 'text-fin-muted dark:text-slate-400',
                           )}
                         >
                           ({item.children.length} sub)

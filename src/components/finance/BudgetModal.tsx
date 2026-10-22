@@ -170,16 +170,20 @@ export function BudgetModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-fin-border sm:max-w-md">
+      <DialogContent className="border-fin-border sm:max-w-md dark:border-white/10 dark:bg-gradient-to-br dark:from-indigo-950/35 dark:via-[#111726] dark:to-[#0c121e] dark:text-slate-100">
         <DialogHeader>
-          <DialogTitle>{budget ? 'Editar meta de gasto' : 'Nova meta de gasto'}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-fin-text dark:text-slate-100">
+            {budget ? 'Editar meta de gasto' : 'Nova meta de gasto'}
+          </DialogTitle>
+          <DialogDescription className="text-fin-muted dark:text-slate-400">
             Defina o limite mensal para acompanhar seus gastos e receber alertas preventivos.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4 pt-2">
           <label className="block space-y-1.5">
-            <span className="text-[13px] font-medium">Categoria</span>
+            <span className="text-[13px] font-medium text-fin-text dark:text-slate-200">
+              Categoria
+            </span>
             <select
               className="field"
               value={form.category}
@@ -196,7 +200,7 @@ export function BudgetModal({
               ))}
             </select>
             {budget && (
-              <p className="text-[11px] text-fin-muted">
+              <p className="text-[11px] text-fin-muted dark:text-slate-400">
                 A categoria não pode ser alterada na edição. Para mudar de categoria, exclua e crie
                 uma nova.
               </p>
@@ -205,7 +209,9 @@ export function BudgetModal({
 
           <div className="space-y-1.5">
             <label className="block space-y-1.5">
-              <span className="text-[13px] font-medium">Limite mensal (R$)</span>
+              <span className="text-[13px] font-medium text-fin-text dark:text-slate-200">
+                Limite mensal (R$)
+              </span>
               <input
                 type="number"
                 step="0.01"
@@ -220,14 +226,16 @@ export function BudgetModal({
 
             {/* Sugestão automática baseada nos últimos 3 meses */}
             {suggestedLimit !== null && suggestedLimit > 0 && (
-              <div className="mt-2 flex items-center justify-between rounded-xl border border-indigo-100 bg-indigo-50/70 p-2.5 text-xs text-fin-text animate-fade-in">
+              <div className="mt-2 flex items-center justify-between rounded-xl border border-indigo-100 bg-indigo-50/70 p-2.5 text-xs text-fin-text animate-fade-in dark:border-indigo-500/25 dark:bg-indigo-950/40 dark:text-indigo-200">
                 <div className="flex items-center gap-2">
-                  <span className="grid h-6 w-6 place-items-center rounded-lg bg-indigo-100 text-fin-primary shrink-0">
+                  <span className="grid h-6 w-6 place-items-center rounded-lg bg-indigo-100 text-fin-primary shrink-0 dark:bg-indigo-500/20 dark:text-indigo-300">
                     <Sparkles className="h-3.5 w-3.5" />
                   </span>
                   <div>
-                    <span className="text-fin-muted">Sugestão com base nos últimos 3 meses:</span>{' '}
-                    <strong className="font-semibold text-fin-primary">
+                    <span className="text-fin-muted dark:text-slate-400">
+                      Sugestão com base nos últimos 3 meses:
+                    </span>{' '}
+                    <strong className="font-semibold text-fin-primary dark:text-indigo-300">
                       {brl.format(suggestedLimit)}
                     </strong>
                   </div>
@@ -235,21 +243,25 @@ export function BudgetModal({
                 <button
                   type="button"
                   onClick={() => setLimitStr(suggestedLimit.toFixed(2))}
-                  className="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-fin-primary shadow-xs border border-indigo-200 hover:bg-indigo-50 transition"
+                  className="rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-fin-primary shadow-xs border border-indigo-200 hover:bg-indigo-50 transition dark:bg-white/10 dark:border-white/10 dark:text-indigo-300 dark:hover:bg-white/15"
                 >
                   Usar sugestão
                 </button>
               </div>
             )}
             {loadingTransactions && (
-              <p className="text-[11px] text-fin-muted flex items-center gap-1.5 pt-1">
+              <p className="text-[11px] text-fin-muted dark:text-slate-400 flex items-center gap-1.5 pt-1">
                 <Loader2 className="h-3 w-3 animate-spin" />
                 Calculando média dos últimos 3 meses...
               </p>
             )}
           </div>
 
-          {message && <p className="rounded-lg bg-red-50 p-3 text-sm text-fin-danger">{message}</p>}
+          {message && (
+            <p className="rounded-lg bg-red-50 p-3 text-sm text-fin-danger dark:bg-rose-950/40 dark:border dark:border-rose-500/30 dark:text-rose-300">
+              {message}
+            </p>
+          )}
 
           <button type="submit" className="btn-primary w-full" disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}

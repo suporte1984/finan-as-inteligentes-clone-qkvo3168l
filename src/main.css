@@ -481,6 +481,15 @@
   }
 }
 
+/* Ocultar barra de rolagem mantendo funcionalidade */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 @media print {
   aside,
   header,

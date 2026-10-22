@@ -604,53 +604,36 @@ function Sidebar({
 
   return (
     <div
-      className={`relative flex h-full flex-col overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+      className={`relative flex h-full flex-col overflow-y-auto overflow-x-hidden no-scrollbar ${
         collapsed ? 'items-center px-2 py-3.5' : 'px-3.5 pb-4 pt-4'
       }`}
     >
       {/* ESTADO RECOLHIDO: Inspirado no design em pílula com ícones em rounded-squares e botão "+" destacado */}
       {collapsed ? (
         <div className="flex h-full w-full flex-col items-center">
-          {/* Topo: Item Início/Logo como item da navegação (quadrado arredondado com fundo lilás suave quando ativo ou branco com ícone grafite) */}
-          <div className="mb-1 shrink-0 pt-0.5">
+          {/* Topo: Logo oficial do sistema idêntico ao modo expandido (quadrado escuro com ícone branco) */}
+          <div className="mb-2 shrink-0">
             <Tooltip>
               <TooltipTrigger asChild>
                 <NavLink
                   to="/"
-                  end
-                  className={({ isActive }) =>
-                    `grid h-11 w-11 place-items-center rounded-2xl transition-all duration-150 ${
-                      isActive
-                        ? 'bg-[#eef0ff] text-[#4f46e5] border border-[#dce2ff] shadow-xs font-semibold'
-                        : 'border border-fin-border/50 bg-white text-[#222530] shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:bg-fin-surface/80 hover:text-[#111322] hover:border-fin-border hover:shadow'
-                    }`
-                  }
-                  aria-label="Finanças Inteligentes - Início"
+                  className="flex items-center justify-center rounded-xl transition hover:opacity-90"
+                  aria-label="Finanças Inteligentes"
                 >
-                  {({ isActive }) => (
-                    <WalletCards
-                      className={`h-5 w-5 shrink-0 transition-transform hover:scale-105 ${
-                        isActive ? 'stroke-[2] text-[#4f46e5]' : 'stroke-[1.65] text-[#222530]'
-                      }`}
-                    />
-                  )}
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-fin-text text-white shadow-sm">
+                    <WalletCards className="h-5 w-5" />
+                  </span>
                 </NavLink>
               </TooltipTrigger>
               <TooltipContent side="right" className="font-semibold">
-                Início
+                Finanças Inteligentes
               </TooltipContent>
             </Tooltip>
           </div>
 
-          {/* Espaçamento reservado entre o item de topo e a linha divisória (onde o toggle ">" morde a borda lateral) */}
-          <div className="h-8 w-full shrink-0" />
-
-          {/* Divisor fino cinza claro (conforme imagem de referência) */}
-          <div className="mb-2 h-px w-8 shrink-0 bg-[#e4e7ec]" />
-
-          {/* Botão de ação: "+" em quadrado arredondado sem fundo cinza forte, estilo limpo */}
+          {/* Botão de ação: "+" em destaque */}
           {onNewTransaction && (
-            <div className="mb-1.5 shrink-0">
+            <div className="mb-2 shrink-0">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -668,52 +651,53 @@ function Sidebar({
             </div>
           )}
 
-          {/* Coluna de navegação: quadrados arredondados brancos com sombra sutil e ícones grafite escuro quase preto */}
+          {/* Divisor fino cinza claro */}
+          <div className="mb-2 h-px w-8 shrink-0 bg-[#e4e7ec]" />
+
+          {/* Coluna de navegação: quadrados arredondados com ícone, incluindo Início (Home) */}
           <nav className="flex w-full flex-1 flex-col items-center gap-2 py-0.5">
-            {navItems
-              .filter((item) => item.to !== '/') // O item Início já está no topo destacado
-              .map((item) => {
-                const isContas = item.to === '/contas'
-                return (
-                  <Tooltip key={item.to}>
-                    <TooltipTrigger asChild>
-                      <NavLink
-                        to={item.to}
-                        end={item.exact}
-                        className={({ isActive }) =>
-                          `group relative grid h-11 w-11 place-items-center rounded-2xl transition-all duration-150 ${
-                            isActive
-                              ? 'bg-[#eef0ff] text-[#4f46e5] shadow-xs font-semibold border border-[#dce2ff]'
-                              : 'border border-fin-border/50 bg-white text-[#222530] shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:bg-fin-surface/80 hover:text-[#111322] hover:border-fin-border hover:shadow'
-                          }`
-                        }
-                      >
-                        {({ isActive }) => (
-                          <>
-                            <item.icon
-                              className={`h-5 w-5 shrink-0 transition-transform group-hover:scale-105 ${
-                                isActive
-                                  ? 'stroke-[2] text-[#4f46e5]'
-                                  : 'stroke-[1.65] text-[#222530]'
-                              }`}
-                            />
-                            {/* Badge de contas em atraso no ícone de Contas */}
-                            {isContas && overdue > 0 && (
-                              <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-fin-danger px-1 text-[9px] font-bold text-white shadow-xs ring-2 ring-white">
-                                {overdue}
-                              </span>
-                            )}
-                          </>
-                        )}
-                      </NavLink>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="font-medium">
-                      {item.label}
-                      {isContas && overdue > 0 && ` (${overdue} atrasada${overdue > 1 ? 's' : ''})`}
-                    </TooltipContent>
-                  </Tooltip>
-                )
-              })}
+            {navItems.map((item) => {
+              const isContas = item.to === '/contas'
+              return (
+                <Tooltip key={item.to}>
+                  <TooltipTrigger asChild>
+                    <NavLink
+                      to={item.to}
+                      end={item.exact}
+                      className={({ isActive }) =>
+                        `group relative grid h-11 w-11 place-items-center rounded-2xl transition-all duration-150 ${
+                          isActive
+                            ? 'bg-[#eef0ff] text-[#4f46e5] shadow-xs font-semibold border border-[#dce2ff]'
+                            : 'border border-fin-border/50 bg-white text-[#222530] shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:bg-fin-surface/80 hover:text-[#111322] hover:border-fin-border hover:shadow'
+                        }`
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <item.icon
+                            className={`h-5 w-5 shrink-0 transition-transform group-hover:scale-105 ${
+                              isActive
+                                ? 'stroke-[2] text-[#4f46e5]'
+                                : 'stroke-[1.65] text-[#222530]'
+                            }`}
+                          />
+                          {/* Badge de contas em atraso no ícone de Contas */}
+                          {isContas && overdue > 0 && (
+                            <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-fin-danger px-1 text-[9px] font-bold text-white shadow-xs ring-2 ring-white">
+                              {overdue}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="font-medium">
+                    {item.label}
+                    {isContas && overdue > 0 && ` (${overdue} atrasada${overdue > 1 ? 's' : ''})`}
+                  </TooltipContent>
+                </Tooltip>
+              )
+            })}
           </nav>
 
           {/* Rodapé compacto: Notificações/Contas, Configurações, Suporte e Avatar */}

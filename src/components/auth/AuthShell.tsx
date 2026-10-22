@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
-import { BarChart3, BrainCircuit, CheckCircle2, WalletCards } from 'lucide-react'
+import { BarChart3, BrainCircuit, CheckCircle2, Moon, Sun, WalletCards } from 'lucide-react'
+import { useTheme } from '@/contexts/ThemeContext'
 
 export function AuthShell({
   children,
@@ -10,8 +11,10 @@ export function AuthShell({
   title: string
   subtitle: string
 }) {
+  const { toggleTheme, isDark } = useTheme()
+
   return (
-    <main className="grid min-h-screen bg-white lg:grid-cols-[1.05fr_.95fr]">
+    <main className="grid min-h-screen bg-[var(--fin-bg-page)] text-fin-text transition-colors duration-200 lg:grid-cols-[1.05fr_.95fr]">
       <section className="relative hidden overflow-hidden bg-[#171727] p-10 text-white lg:flex lg:flex-col">
         <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-fin-primary/30 blur-3xl" />
         <div className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-[#8B5CF6]/20 blur-3xl" />
@@ -50,10 +53,24 @@ export function AuthShell({
           © {new Date().getFullYear()} Finanças Inteligentes
         </p>
       </section>
-      <section className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-8">
+      <section className="relative flex min-h-screen items-center justify-center px-5 py-10 sm:px-8">
+        {/* Alternador de tema discreto na tela de autenticação */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="absolute top-5 right-5 grid h-10 w-10 place-items-center rounded-xl border border-fin-border bg-[var(--fin-bg-card)] text-fin-muted transition hover:text-fin-text hover:border-fin-primary/40 shadow-xs"
+          aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
+        >
+          {isDark ? (
+            <Sun className="h-4 w-4 text-amber-400" />
+          ) : (
+            <Moon className="h-4 w-4 text-slate-700" />
+          )}
+        </button>
+
         <div className="w-full max-w-[420px]">
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-fin-text text-white">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--fin-brand-primary)] text-white">
               <WalletCards className="h-5 w-5" />
             </span>
             <span className="text-sm font-bold leading-tight">

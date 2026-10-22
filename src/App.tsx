@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import Layout from '@/components/Layout'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import { FinanceProvider, useFinance } from '@/contexts/FinanceContext'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import Index from '@/pages/Index'
@@ -80,59 +81,61 @@ function AppLoader() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <FinanceProvider>
-        <Routes>
-          <Route
-            path="/login"
-            element={
-              <PublicOnly>
-                <LoginPage />
-              </PublicOnly>
-            }
-          />
-          <Route
-            path="/signup"
-            element={
-              <PublicOnly>
-                <SignupPage />
-              </PublicOnly>
-            }
-          />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route
-            path="/forgot-password"
-            element={
-              <PublicOnly>
-                <ForgotPasswordPage />
-              </PublicOnly>
-            }
-          />
-          <Route
-            path="/reset-password"
-            element={
-              <PublicOnly>
-                <ResetPasswordPage />
-              </PublicOnly>
-            }
-          />
-          <Route path="/confirm-email-change" element={<ConfirmEmailChangePage />} />
-          <Route path="/onboarding" element={<OnboardingGuard />} />
-          <Route element={<ProtectedLayout />}>
-            <Route index element={<Index />} />
-            <Route path="lancamentos" element={<TransactionsPage />} />
-            <Route path="contas" element={<BillsPage />} />
-            <Route path="recorrentes" element={<RecurringPage />} />
-            <Route path="categorias" element={<CategoriesPage />} />
-            <Route path="relatorios" element={<ReportsPage />} />
-            <Route path="assistente" element={<AssistantPage />} />
-            <Route path="usuarios" element={<UsersPage />} />
-            <Route path="configuracoes" element={<SettingsPage />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Toaster />
-      </FinanceProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <FinanceProvider>
+          <Routes>
+            <Route
+              path="/login"
+              element={
+                <PublicOnly>
+                  <LoginPage />
+                </PublicOnly>
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <PublicOnly>
+                  <SignupPage />
+                </PublicOnly>
+              }
+            />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route
+              path="/forgot-password"
+              element={
+                <PublicOnly>
+                  <ForgotPasswordPage />
+                </PublicOnly>
+              }
+            />
+            <Route
+              path="/reset-password"
+              element={
+                <PublicOnly>
+                  <ResetPasswordPage />
+                </PublicOnly>
+              }
+            />
+            <Route path="/confirm-email-change" element={<ConfirmEmailChangePage />} />
+            <Route path="/onboarding" element={<OnboardingGuard />} />
+            <Route element={<ProtectedLayout />}>
+              <Route index element={<Index />} />
+              <Route path="lancamentos" element={<TransactionsPage />} />
+              <Route path="contas" element={<BillsPage />} />
+              <Route path="recorrentes" element={<RecurringPage />} />
+              <Route path="categorias" element={<CategoriesPage />} />
+              <Route path="relatorios" element={<ReportsPage />} />
+              <Route path="assistente" element={<AssistantPage />} />
+              <Route path="usuarios" element={<UsersPage />} />
+              <Route path="configuracoes" element={<SettingsPage />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+        </FinanceProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

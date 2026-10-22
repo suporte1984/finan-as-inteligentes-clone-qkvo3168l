@@ -300,7 +300,7 @@ export default function CategoriesPage() {
         <section className="animate-fade-up stagger-1 space-y-4">
           <div className="flex flex-col gap-2 rounded-2xl border border-fin-border bg-fin-surface/50 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-50 text-fin-primary">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-indigo-500/10 text-fin-primary">
                 <Target className="h-5 w-5" />
               </span>
               <div>

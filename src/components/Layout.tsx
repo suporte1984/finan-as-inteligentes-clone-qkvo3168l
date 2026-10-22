@@ -11,6 +11,7 @@ import {
   Home,
   LogOut,
   Menu,
+  Moon,
   Plus,
   ReceiptText,
   Repeat,
@@ -18,6 +19,7 @@ import {
   Search,
   Settings,
   Sparkles,
+  Sun,
   Users,
   WalletCards,
   X,
@@ -41,6 +43,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useToast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
+import { useTheme } from '@/contexts/ThemeContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { FinanceProvider, useFinance } from '@/contexts/FinanceContext'
 import { getCategoryDescendantIds } from '@/lib/categories'
@@ -74,6 +77,7 @@ export default function Layout() {
 function AppShell() {
   const { user, logout } = useAuth()
   const { categories } = useFinance()
+  const { theme, toggleTheme, isDark } = useTheme()
   const { toast } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
@@ -259,13 +263,13 @@ function AppShell() {
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div className="min-h-screen bg-[#f4f5f8] text-fin-text">
+      <div className="min-h-screen bg-[var(--fin-bg-page)] text-fin-text transition-colors duration-200">
         {/* SIDEBAR FLUTUANTE E RECOLHÍVEL (DESKTOP) */}
         <aside
           aria-label="Menu principal"
-          className={`fixed left-3 top-3 bottom-3 z-40 hidden flex-col rounded-2xl border border-fin-border bg-white/95 backdrop-blur-md transition-all duration-300 ease-in-out lg:flex ${
+          className={`fixed left-3 top-3 bottom-3 z-40 hidden flex-col rounded-2xl border border-fin-border bg-[var(--fin-bg-glass)] backdrop-blur-md transition-all duration-300 ease-in-out lg:flex ${
             sidebarCollapsed ? 'w-[72px]' : 'w-64'
-          } shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.09)]`}
+          } shadow-[0_8px_30px_rgb(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.45)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.09)] dark:hover:shadow-[0_12px_36px_rgb(0,0,0,0.55)]`}
         >
           <Sidebar
             user={user}
@@ -280,6 +284,8 @@ function AppShell() {
             onSupport={() => setSupportOpen(true)}
             onManageUsers={() => navigate('/usuarios')}
             onOpenSettings={() => navigate('/configuracoes')}
+            isDark={isDark}
+            onToggleTheme={toggleTheme}
           />
         </aside>
 
@@ -287,11 +293,11 @@ function AppShell() {
         {menuOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
             <button
-              className="absolute inset-0 bg-fin-text/25 backdrop-blur-[2px] transition-opacity"
+              className="absolute inset-0 bg-fin-text/30 backdrop-blur-[2px] transition-opacity"
               onClick={() => setMenuOpen(false)}
               aria-label="Fechar menu"
             />
-            <aside className="relative m-3 h-[calc(100vh-24px)] w-[86vw] max-w-72 rounded-2xl border border-fin-border bg-white shadow-2xl overflow-hidden flex flex-col">
+            <aside className="relative m-3 h-[calc(100vh-24px)] w-[86vw] max-w-72 rounded-2xl border border-fin-border bg-[var(--fin-bg-card)] shadow-2xl overflow-hidden flex flex-col">
               <button
                 className="absolute right-3.5 top-3.5 z-10 rounded-lg p-2 text-fin-muted hover:bg-fin-surface transition"
                 onClick={() => setMenuOpen(false)}
@@ -321,6 +327,8 @@ function AppShell() {
                   setMenuOpen(false)
                   navigate('/configuracoes')
                 }}
+                isDark={isDark}
+                onToggleTheme={toggleTheme}
               />
             </aside>
           </div>
@@ -337,10 +345,10 @@ function AppShell() {
           }`}
         >
           <header
-            className={`flex h-[66px] items-center gap-3 rounded-2xl border border-fin-border bg-white/95 px-3 sm:px-5 backdrop-blur-md transition-shadow duration-200 ${
+            className={`flex h-[66px] items-center gap-3 rounded-2xl border border-fin-border bg-[var(--fin-bg-glass)] px-3 sm:px-5 backdrop-blur-md transition-shadow duration-200 ${
               isScrolled
-                ? 'shadow-[0_10px_30px_rgba(17,24,39,0.08)]'
-                : 'shadow-[0_4px_18px_rgba(17,24,39,0.04)]'
+                ? 'shadow-[0_10px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.45)]'
+                : 'shadow-[0_4px_18px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_18px_rgba(0,0,0,0.3)]'
             }`}
           >
             <button
@@ -353,7 +361,7 @@ function AppShell() {
 
             <button
               onClick={() => setSearchOpen(true)}
-              className="group flex h-10 min-w-0 flex-1 items-center gap-3 rounded-xl border border-fin-border bg-white/80 px-3 text-left text-sm text-fin-muted shadow-[0_1px_2px_rgba(25,25,39,.03)] transition hover:border-fin-primary/40 hover:bg-white md:max-w-xl"
+              className="group flex h-10 min-w-0 flex-1 items-center gap-3 rounded-xl border border-fin-border bg-[var(--fin-bg-input)] px-3 text-left text-sm text-fin-muted shadow-xs transition hover:border-fin-primary/40 md:max-w-xl"
             >
               <Search className="h-4 w-4 shrink-0 text-fin-muted group-hover:text-fin-primary transition-colors" />
               <span className="truncate">Buscar lançamentos...</span>
@@ -374,6 +382,26 @@ function AppShell() {
                 Novo lançamento
               </button>
 
+              {/* SELETOR DE TEMA CLARO/ESCURO COM ÍCONE SOL/LUA */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={toggleTheme}
+                    className="grid h-10 w-10 place-items-center rounded-xl border border-transparent bg-fin-surface/80 text-fin-muted transition hover:border-fin-border hover:bg-fin-surface hover:text-fin-primary active:scale-95 cursor-pointer focus:outline-none"
+                    aria-label={isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+                  >
+                    {isDark ? (
+                      <Sun className="h-4 w-4 text-amber-400 transition-transform duration-200 hover:rotate-45" />
+                    ) : (
+                      <Moon className="h-4 w-4 text-slate-700 transition-transform duration-200 hover:-rotate-12" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {isDark ? 'Ativar modo claro' : 'Ativar modo escuro (modelo anexo)'}
+                </TooltipContent>
+              </Tooltip>
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -383,7 +411,7 @@ function AppShell() {
                   >
                     <Bell className="h-4 w-4" />
                     {overdue > 0 && (
-                      <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-fin-danger px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                      <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-fin-danger px-1 text-[10px] font-bold text-white ring-2 ring-[var(--fin-bg-card)]">
                         {overdue}
                       </span>
                     )}
@@ -397,13 +425,16 @@ function AppShell() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 rounded-xl p-1 transition hover:bg-fin-surface focus:outline-none">
-                    <span className="grid h-9 w-9 place-items-center rounded-lg bg-fin-text text-xs font-bold text-white shadow-xs">
+                    <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--fin-brand-primary)] text-xs font-bold text-white shadow-xs">
                       {initials}
                     </span>
                     <ChevronDown className="hidden h-3.5 w-3.5 text-fin-muted sm:block" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 border-fin-border shadow-lg">
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 border-fin-border bg-[var(--fin-bg-card)] shadow-lg"
+                >
                   <DropdownMenuLabel>
                     <span className="block text-sm font-semibold text-fin-text">
                       {user?.name || firstName}
@@ -413,6 +444,19 @@ function AppShell() {
                     </span>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={toggleTheme}>
+                    {isDark ? (
+                      <>
+                        <Sun className="mr-2 h-4 w-4 text-amber-400" />
+                        Modo claro
+                      </>
+                    ) : (
+                      <>
+                        <Moon className="mr-2 h-4 w-4 text-slate-700" />
+                        Modo escuro
+                      </>
+                    )}
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/usuarios')}>
                     <Users className="mr-2 h-4 w-4" />
                     Gerenciar usuários
@@ -436,7 +480,7 @@ function AppShell() {
                       logout()
                       navigate('/login')
                     }}
-                    className="text-fin-danger focus:text-fin-danger focus:bg-red-50"
+                    className="text-fin-danger focus:text-fin-danger focus:bg-red-50 dark:focus:bg-red-950/30"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     Sair
@@ -449,7 +493,7 @@ function AppShell() {
 
         {/* CONTEÚDO PRINCIPAL (COM PADDING DINÂMICO PARA SE AJUSTAR À SIDEBAR E HEADER) */}
         <main
-          className={`min-h-screen bg-[#f4f5f8] pt-[90px] transition-all duration-300 ease-in-out ${
+          className={`min-h-screen bg-[var(--fin-bg-page)] pt-[90px] transition-all duration-300 ease-in-out ${
             sidebarCollapsed ? 'lg:pl-[84px]' : 'lg:pl-[276px]'
           }`}
         >
@@ -556,6 +600,8 @@ function Sidebar({
   onSupport,
   onManageUsers,
   onOpenSettings,
+  isDark = false,
+  onToggleTheme,
 }: {
   user: import('pocketbase').RecordModel | null
   overdue: number
@@ -566,6 +612,8 @@ function Sidebar({
   onSupport: () => void
   onManageUsers: () => void
   onOpenSettings: () => void
+  isDark?: boolean
+  onToggleTheme?: () => void
 }) {
   const name = String(user?.name || user?.email || 'Usuário')
   const email = String(user?.email || '')
@@ -612,7 +660,7 @@ function Sidebar({
                     <button
                       type="button"
                       onClick={onToggleCollapse}
-                      className="grid h-7 w-7 place-items-center rounded-lg bg-transparent text-[#2c3038] hover:text-[#111322] hover:bg-black/[0.04] active:scale-95 transition-all cursor-pointer focus:outline-none"
+                      className="grid h-7 w-7 place-items-center rounded-lg bg-transparent text-[var(--fin-sidebar-chevron)] hover:text-fin-text hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer focus:outline-none"
                       aria-label="Expandir menu lateral"
                     >
                       <ChevronRight className="h-4 w-4 stroke-[1.65]" />
@@ -631,10 +679,10 @@ function Sidebar({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onNewTransaction}
-                    className="group grid h-11 w-11 place-items-center rounded-2xl bg-white/70 border border-transparent text-[#222530] transition-all duration-150 hover:bg-white hover:border-fin-border/60 hover:shadow-xs hover:text-[#111322] active:scale-95"
+                    className="group grid h-11 w-11 place-items-center rounded-2xl bg-[var(--fin-bg-card)] border border-fin-border/60 text-[var(--fin-sidebar-icon)] transition-all duration-150 hover:border-fin-primary/60 hover:shadow-xs hover:text-fin-text active:scale-95"
                     aria-label="Novo lançamento"
                   >
-                    <Plus className="h-5 w-5 stroke-[1.65] transition-transform duration-200 group-hover:rotate-90 text-[#222530]" />
+                    <Plus className="h-5 w-5 stroke-[1.65] transition-transform duration-200 group-hover:rotate-90 text-[var(--fin-sidebar-icon)]" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="right" className="font-semibold">
@@ -644,8 +692,8 @@ function Sidebar({
             </div>
           )}
 
-          {/* Divisor fino cinza claro */}
-          <div className="mb-2 h-px w-8 shrink-0 bg-[#e4e7ec]" />
+          {/* Divisor fino */}
+          <div className="mb-2 h-px w-8 shrink-0 bg-fin-border" />
 
           {/* Coluna de navegação: quadrados arredondados com ícone, incluindo Início (Home) */}
           <nav className="flex w-full flex-1 flex-col items-center gap-2 py-0.5">
@@ -660,8 +708,8 @@ function Sidebar({
                       className={({ isActive }) =>
                         `group relative grid h-11 w-11 place-items-center rounded-2xl transition-all duration-150 ${
                           isActive
-                            ? 'bg-[#eef0ff] text-[#4f46e5] shadow-xs font-semibold border border-[#dce2ff]'
-                            : 'border border-fin-border/50 bg-white text-[#222530] shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:bg-fin-surface/80 hover:text-[#111322] hover:border-fin-border hover:shadow'
+                            ? 'bg-fin-primary/15 text-fin-primary shadow-xs font-semibold border border-fin-primary/30'
+                            : 'border border-fin-border/60 bg-[var(--fin-bg-card)] text-[var(--fin-sidebar-icon)] shadow-[0_1px_3px_rgba(0,0,0,0.04)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.3)] hover:bg-fin-surface hover:text-fin-text hover:border-fin-border hover:shadow'
                         }`
                       }
                     >
@@ -670,13 +718,13 @@ function Sidebar({
                           <item.icon
                             className={`h-5 w-5 shrink-0 transition-transform group-hover:scale-105 ${
                               isActive
-                                ? 'stroke-[2] text-[#4f46e5]'
-                                : 'stroke-[1.65] text-[#222530]'
+                                ? 'stroke-[2] text-fin-primary'
+                                : 'stroke-[1.65] text-[var(--fin-sidebar-icon)]'
                             }`}
                           />
                           {/* Badge de contas em atraso no ícone de Contas */}
                           {isContas && overdue > 0 && (
-                            <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-fin-danger px-1 text-[9px] font-bold text-white shadow-xs ring-2 ring-white">
+                            <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-fin-danger px-1 text-[9px] font-bold text-white shadow-xs ring-2 ring-[var(--fin-bg-card)]">
                               {overdue}
                             </span>
                           )}
@@ -693,18 +741,39 @@ function Sidebar({
             })}
           </nav>
 
-          {/* Rodapé compacto: Notificações/Contas, Configurações, Suporte e Avatar */}
-          <div className="mt-auto flex w-full shrink-0 flex-col items-center gap-2 border-t border-[#e4e7ec] pt-3">
+          {/* Rodapé compacto: Notificações/Contas, Alternar Tema, Configurações, Suporte e Avatar */}
+          <div className="mt-auto flex w-full shrink-0 flex-col items-center gap-2 border-t border-fin-border pt-3">
+            {onToggleTheme && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onToggleTheme}
+                    className="grid h-10 w-10 place-items-center rounded-xl text-[var(--fin-sidebar-icon)] transition hover:bg-fin-surface hover:text-fin-text"
+                    aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
+                  >
+                    {isDark ? (
+                      <Sun className="h-4 w-4 text-amber-400 stroke-[1.8]" />
+                    ) : (
+                      <Moon className="h-4 w-4 stroke-[1.8]" />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  {isDark ? 'Modo claro' : 'Modo escuro'}
+                </TooltipContent>
+              </Tooltip>
+            )}
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <NavLink
                   to="/contas?status=atrasadas"
-                  className="relative grid h-10 w-10 place-items-center rounded-xl text-[#222530] transition hover:bg-fin-surface hover:text-fin-danger"
+                  className="relative grid h-10 w-10 place-items-center rounded-xl text-[var(--fin-sidebar-icon)] transition hover:bg-fin-surface hover:text-fin-danger"
                   aria-label="Contas em atraso"
                 >
                   <Bell className="h-4 w-4 stroke-[1.8]" />
                   {overdue > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-fin-danger px-1 text-[9px] font-bold text-white shadow-xs ring-2 ring-white">
+                    <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-fin-danger px-1 text-[9px] font-bold text-white shadow-xs ring-2 ring-[var(--fin-bg-card)]">
                       {overdue}
                     </span>
                   )}
@@ -719,7 +788,7 @@ function Sidebar({
               <TooltipTrigger asChild>
                 <button
                   onClick={onOpenSettings}
-                  className="grid h-10 w-10 place-items-center rounded-xl text-[#222530] transition hover:bg-fin-surface hover:text-[#111322]"
+                  className="grid h-10 w-10 place-items-center rounded-xl text-[var(--fin-sidebar-icon)] transition hover:bg-fin-surface hover:text-fin-text"
                   aria-label="Configurações"
                 >
                   <Settings className="h-4 w-4 stroke-[1.8]" />
@@ -732,7 +801,7 @@ function Sidebar({
               <TooltipTrigger asChild>
                 <button
                   onClick={onSupport}
-                  className="grid h-10 w-10 place-items-center rounded-xl text-[#222530] transition hover:bg-fin-surface hover:text-[#111322]"
+                  className="grid h-10 w-10 place-items-center rounded-xl text-[var(--fin-sidebar-icon)] transition hover:bg-fin-surface hover:text-fin-text"
                   aria-label="Ajuda & Suporte"
                 >
                   <CircleHelp className="h-4 w-4 stroke-[1.8]" />
@@ -744,7 +813,7 @@ function Sidebar({
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="pt-1">
-                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-fin-text text-xs font-bold text-white shadow-xs cursor-default">
+                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-[var(--fin-brand-primary)] text-xs font-bold text-white shadow-xs cursor-default">
                     {initials}
                   </span>
                 </div>
@@ -786,7 +855,7 @@ function Sidebar({
                     <button
                       type="button"
                       onClick={onToggleCollapse}
-                      className="hidden lg:grid h-7 w-7 place-items-center rounded-lg bg-transparent text-[#2c3038] hover:text-[#111322] hover:bg-black/[0.04] active:scale-95 transition-all cursor-pointer focus:outline-none"
+                      className="hidden lg:grid h-7 w-7 place-items-center rounded-lg bg-transparent text-[var(--fin-sidebar-chevron)] hover:text-fin-text hover:bg-black/[0.04] dark:hover:bg-white/[0.06] active:scale-95 transition-all cursor-pointer focus:outline-none"
                       aria-label="Recolher menu lateral"
                     >
                       <ChevronLeft className="h-4 w-4 stroke-[1.65]" />
@@ -873,7 +942,7 @@ function Sidebar({
           {/* Rodapé / Perfil */}
           <div className="mt-auto shrink-0 pt-4 border-t border-fin-border/70">
             <div className="mb-2 flex items-center gap-2.5 rounded-xl bg-fin-surface/60 p-2 border border-fin-border/60">
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-fin-text text-xs font-bold text-white shadow-xs">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[var(--fin-brand-primary)] text-xs font-bold text-white shadow-xs">
                 {initials}
               </span>
               <div className="min-w-0 flex-1">
@@ -881,6 +950,24 @@ function Sidebar({
                 <p className="truncate text-[10px] text-fin-muted">{email}</p>
               </div>
             </div>
+            {onToggleTheme && (
+              <button
+                onClick={onToggleTheme}
+                className="flex w-full items-center justify-between rounded-xl px-2.5 py-1.5 text-xs font-medium text-fin-muted transition hover:bg-fin-surface hover:text-fin-text"
+              >
+                <span className="flex items-center gap-2">
+                  {isDark ? (
+                    <Sun className="h-3.5 w-3.5 text-amber-400" />
+                  ) : (
+                    <Moon className="h-3.5 w-3.5" />
+                  )}
+                  <span>Tema</span>
+                </span>
+                <span className="rounded-md bg-fin-surface px-1.5 py-0.5 text-[10px] font-semibold text-fin-text">
+                  {isDark ? 'Escuro' : 'Claro'}
+                </span>
+              </button>
+            )}
             <button
               onClick={onManageUsers}
               className="flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-fin-primary hover:bg-fin-surface transition"

@@ -171,7 +171,7 @@ export default function UsersPage() {
               className={cn(
                 'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition',
                 statusFilter === val
-                  ? 'bg-white text-fin-text shadow-sm'
+                  ? 'bg-[var(--fin-bg-card)] text-fin-text shadow-sm'
                   : 'text-fin-muted hover:text-fin-text',
               )}
             >
@@ -335,7 +335,10 @@ export default function UsersPage() {
                         <Power className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="border-fin-border bg-white">
+                    <DropdownMenuContent
+                      align="end"
+                      className="border-fin-border bg-[var(--fin-bg-card)]"
+                    >
                       <DropdownMenuItem
                         disabled={isSelf}
                         onClick={() => setToggleConfirm(profile)}
@@ -425,7 +428,7 @@ export default function UsersPage() {
           if (!open) setToggleConfirm(null)
         }}
       >
-        <AlertDialogContent className="border-fin-border bg-white text-fin-text sm:max-w-md">
+        <AlertDialogContent className="border-fin-border bg-[var(--fin-bg-card)] text-fin-text sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>
               {toggleConfirm?.active !== false

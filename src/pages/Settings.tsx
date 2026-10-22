@@ -21,12 +21,15 @@ import {
   Settings as SettingsIcon,
   ShieldCheck,
   Sparkles,
+  Sun,
+  Moon,
   UserCheck,
   XCircle,
 } from 'lucide-react'
 
 import { Switch } from '@/components/ui/switch'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { useToast } from '@/hooks/use-toast'
 import { getUserSettings, updateUserSettings } from '@/services/settings'
 import { sendBillsDueReminders } from '@/services/bills'
@@ -59,6 +62,7 @@ const DUE_DAYS_OPTIONS = [
 
 export default function SettingsPage() {
   const { user } = useAuth()
+  const { setTheme, isDark } = useTheme()
   const { toast } = useToast()
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const [loading, setLoading] = useState(true)
@@ -308,8 +312,82 @@ export default function SettingsPage() {
         </div>
       ) : (
         <div className="grid gap-6">
+          {/* SEÇÃO TEMA E APARÊNCIA */}
+          <div className="fin-card p-6 sm:p-7">
+            <div className="flex items-start gap-3.5">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-500/10 text-fin-primary">
+                {isDark ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              </span>
+              <div className="flex-1">
+                <h2 className="text-base font-semibold text-fin-text sm:text-lg">
+                  Aparência e Tema do Sistema
+                </h2>
+                <p className="text-sm text-fin-muted">
+                  Alterne entre o tema Claro original (lilás suave/índigo) e o tema Escuro inspirado
+                  no modelo em anexo (azul-marinho profundo quase preto). A preferência fica gravada
+                  no seu navegador.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-fin-border pt-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
+                {/* Opção Tema Claro */}
+                <button
+                  type="button"
+                  onClick={() => setTheme('light')}
+                  className={`flex items-start gap-3.5 rounded-2xl border p-4 text-left transition-all ${
+                    !isDark
+                      ? 'border-fin-primary bg-indigo-500/10 ring-2 ring-fin-primary/30'
+                      : 'border-fin-border bg-[var(--fin-bg-card)] hover:border-fin-primary/40'
+                  }`}
+                >
+                  <div className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border border-fin-border bg-[var(--fin-bg-card)]">
+                    {!isDark && <span className="h-2.5 w-2.5 rounded-full bg-fin-primary" />}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Sun className="h-4 w-4 text-amber-500" />
+                      <span className="text-sm font-semibold text-fin-text">Modo Claro</span>
+                    </div>
+                    <p className="mt-1 text-xs text-fin-muted leading-relaxed">
+                      Fundo clean suave, cards brancos refinados e acentos lilás/índigo.
+                    </p>
+                  </div>
+                </button>
+
+                {/* Opção Tema Escuro (modelo anexo) */}
+                <button
+                  type="button"
+                  onClick={() => setTheme('dark')}
+                  className={`flex items-start gap-3.5 rounded-2xl border p-4 text-left transition-all ${
+                    isDark
+                      ? 'border-fin-primary bg-indigo-500/10 ring-2 ring-fin-primary/30'
+                      : 'border-fin-border bg-[var(--fin-bg-card)] hover:border-fin-primary/40'
+                  }`}
+                >
+                  <div className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border border-fin-border bg-[var(--fin-bg-card)]">
+                    {isDark && <span className="h-2.5 w-2.5 rounded-full bg-fin-primary" />}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Moon className="h-4 w-4 text-indigo-400" />
+                      <span className="text-sm font-semibold text-fin-text">
+                        Modo Escuro (Modelo)
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-fin-muted leading-relaxed">
+                      Paleta azul-marinho profundo (#0a0e17), superfícies translúcidas e destaques
+                      verdes/azuis.
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* SEÇÃO AJUDA & TOUR DO SISTEMA */}
-          <div className="fin-card p-6 sm:p-7 border-indigo-100 bg-gradient-to-r from-white via-white to-indigo-50/30">
+          <div className="fin-card p-6 sm:p-7 border-indigo-100 dark:border-indigo-950/40 bg-gradient-to-r from-[var(--fin-bg-card)] via-[var(--fin-bg-card)] to-indigo-50/30 dark:to-indigo-950/20">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-start gap-3.5">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-fin-primary">

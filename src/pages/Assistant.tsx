@@ -302,7 +302,7 @@ export default function AssistantPage() {
 
       <div className="animate-fade-up stagger-1 grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 items-start">
         {/* Painel lateral: Histórico de Conversas */}
-        <div className="fin-card p-4 space-y-3 bg-white shadow-xs">
+        <div className="fin-card p-4 space-y-3 bg-[var(--fin-bg-card)] shadow-xs">
           <div className="flex items-center justify-between pb-2 border-b border-fin-border">
             <span className="text-xs font-bold uppercase tracking-wider text-fin-muted flex items-center gap-1.5">
               <MessageSquare className="h-3.5 w-3.5" />
@@ -363,7 +363,7 @@ export default function AssistantPage() {
         {/* Área de Chat Principal */}
         <div className="fin-card flex flex-col h-[650px] overflow-hidden border border-fin-border shadow-xs">
           {/* Header do Chat */}
-          <div className="flex items-center justify-between border-b border-fin-border bg-white px-5 py-3.5">
+          <div className="flex items-center justify-between border-b border-fin-border bg-[var(--fin-bg-card)] px-5 py-3.5">
             <div className="flex items-center gap-3">
               <span className="grid h-10 w-10 place-items-center rounded-xl bg-fin-primary text-white shadow-sm">
                 <BrainCircuit className="h-5 w-5" />
@@ -399,7 +399,7 @@ export default function AssistantPage() {
           </div>
 
           {/* Mensagens */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-5 bg-[#f4f5f8]">
+          <div className="flex-1 overflow-y-auto p-5 space-y-5 bg-[var(--fin-bg-page)]">
             {loadingHistory ? (
               <div className="space-y-4 py-8">
                 <div className="skeleton h-16 w-3/4 ml-auto rounded-2xl" />
@@ -426,7 +426,7 @@ export default function AssistantPage() {
                     <button
                       key={idx}
                       onClick={() => void handleSendMessage(prompt)}
-                      className="w-full text-left text-xs p-3 rounded-xl border border-fin-border bg-white text-fin-text hover:border-fin-primary/40 hover:bg-indigo-50/40 transition flex items-center justify-between group shadow-2xs"
+                      className="w-full text-left text-xs p-3 rounded-xl border border-fin-border bg-[var(--fin-bg-card)] text-fin-text hover:border-fin-primary/40 hover:bg-indigo-500/10 transition flex items-center justify-between group shadow-2xs"
                     >
                       <span className="line-clamp-1">{prompt}</span>
                       <CornerDownLeft className="h-3.5 w-3.5 text-fin-muted group-hover:text-fin-primary shrink-0 ml-2" />
@@ -461,7 +461,7 @@ export default function AssistantPage() {
                         'max-w-[85%] rounded-2xl p-4 shadow-xs leading-relaxed transition-all relative group/msg',
                         isUser
                           ? 'bg-fin-primary text-white rounded-tr-none font-medium whitespace-pre-wrap'
-                          : 'bg-white text-fin-text border border-slate-200/90 rounded-tl-none',
+                          : 'bg-[var(--fin-bg-card)] text-fin-text border border-fin-border rounded-tl-none',
                       )}
                     >
                       {isUser ? (
@@ -533,7 +533,7 @@ export default function AssistantPage() {
           {/* Input de Envio */}
           <form
             onSubmit={onSubmit}
-            className="p-3 border-t border-fin-border bg-white flex items-end gap-2"
+            className="p-3 border-t border-fin-border bg-[var(--fin-bg-card)] flex items-end gap-2"
           >
             <div className="relative flex-1">
               <textarea
@@ -543,7 +543,7 @@ export default function AssistantPage() {
                 onKeyDown={onKeyDown}
                 placeholder="Pergunte sobre seus gastos, contas, metas ou peça dicas... (Enter para enviar)"
                 rows={1}
-                className="w-full resize-none rounded-xl border border-fin-border bg-fin-surface/50 px-4 py-3 text-sm focus:border-fin-primary focus:bg-white focus:outline-none transition max-h-32 min-h-[46px]"
+                className="w-full resize-none rounded-xl border border-fin-border bg-fin-surface/50 px-4 py-3 text-sm text-fin-text focus:border-fin-primary focus:bg-[var(--fin-bg-card)] focus:outline-none transition max-h-32 min-h-[46px]"
                 disabled={loading}
               />
             </div>

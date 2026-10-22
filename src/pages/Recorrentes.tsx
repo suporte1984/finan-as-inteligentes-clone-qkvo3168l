@@ -594,7 +594,7 @@ function RecurringRow({
       <td className="px-3 py-4 text-right">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="rounded-lg p-2 text-fin-muted transition hover:bg-white hover:text-fin-text">
+            <button className="rounded-lg p-2 text-fin-muted transition hover:bg-[var(--fin-bg-surface)] hover:text-fin-text">
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>

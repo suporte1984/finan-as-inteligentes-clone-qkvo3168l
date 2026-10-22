@@ -268,20 +268,33 @@ function AppShell() {
           } shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.09)]`}
         >
           {/* Botão de Toggle para Recolher / Expandir Menu (Desktop)
-              Posicionado no container <aside> com -right-3.5 para ficar perfeitamente centrado
-              na borda direita e nunca ser cortado pelo overflow interno do menu. */}
-          <button
-            onClick={toggleSidebar}
-            className="absolute -right-3.5 top-6 z-50 hidden h-7 w-7 place-items-center rounded-full border border-fin-border bg-white text-fin-muted shadow-md hover:border-fin-primary/40 hover:bg-fin-surface hover:text-fin-primary hover:scale-105 active:scale-95 transition-all lg:grid"
-            aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
-            title={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+              Estilo da imagem de referência: entalhe em meio-círculo branco na borda direita da pílula
+              contendo apenas o chevron fino ">" em grafite escuro sem borda, sem fundo e sem sombra no botão em si. */}
+          <div
+            className={`absolute z-50 hidden lg:flex items-center justify-center transition-all duration-300 ease-in-out ${
+              sidebarCollapsed ? '-right-[11px] top-[74px]' : '-right-[11px] top-7'
+            }`}
           >
-            {sidebarCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
-          </button>
+            {/* O entalhe em meia lua / círculo branco contínuo com o fundo da pílula */}
+            <div className="relative flex h-8 w-6 items-center justify-start rounded-r-full border-y border-r border-fin-border bg-white shadow-[2px_1px_4px_rgba(0,0,0,0.03)]">
+              {/* Máscara para conectar perfeitamente com o fundo branco da sidebar */}
+              <div className="absolute -left-1.5 top-0 bottom-0 w-2 bg-white" />
+
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                className="relative z-10 -ml-1 grid h-7 w-7 place-items-center rounded-full bg-transparent text-[#2c3038] hover:text-[#111322] hover:bg-black/[0.04] active:scale-95 transition-all cursor-pointer focus:outline-none"
+                aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+                title={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+              >
+                {sidebarCollapsed ? (
+                  <ChevronRight className="h-4 w-4 stroke-[1.65]" />
+                ) : (
+                  <ChevronLeft className="h-4 w-4 stroke-[1.65]" />
+                )}
+              </button>
+            </div>
+          </div>
 
           <Sidebar
             user={user}
@@ -598,35 +611,54 @@ function Sidebar({
       {/* ESTADO RECOLHIDO: Inspirado no design em pílula com ícones em rounded-squares e botão "+" destacado */}
       {collapsed ? (
         <div className="flex h-full w-full flex-col items-center">
-          {/* Topo: Logo compacto com tooltip */}
-          <div className="mb-2 shrink-0 pt-0.5">
+          {/* Topo: Item Início/Logo como item da navegação (quadrado arredondado com fundo lilás suave quando ativo ou branco com ícone grafite) */}
+          <div className="mb-1 shrink-0 pt-0.5">
             <Tooltip>
               <TooltipTrigger asChild>
                 <NavLink
                   to="/"
-                  className="grid h-11 w-11 place-items-center rounded-2xl bg-fin-text text-white shadow-sm transition hover:opacity-90"
+                  end
+                  className={({ isActive }) =>
+                    `grid h-11 w-11 place-items-center rounded-2xl transition-all duration-150 ${
+                      isActive
+                        ? 'bg-[#eef0ff] text-[#4f46e5] border border-[#dce2ff] shadow-xs font-semibold'
+                        : 'border border-fin-border/50 bg-white text-[#222530] shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:bg-fin-surface/80 hover:text-[#111322] hover:border-fin-border hover:shadow'
+                    }`
+                  }
                   aria-label="Finanças Inteligentes - Início"
                 >
-                  <WalletCards className="h-5 w-5" />
+                  {({ isActive }) => (
+                    <WalletCards
+                      className={`h-5 w-5 shrink-0 transition-transform hover:scale-105 ${
+                        isActive ? 'stroke-[2] text-[#4f46e5]' : 'stroke-[1.65] text-[#222530]'
+                      }`}
+                    />
+                  )}
                 </NavLink>
               </TooltipTrigger>
               <TooltipContent side="right" className="font-semibold">
-                Finanças Inteligentes
+                Início
               </TooltipContent>
             </Tooltip>
           </div>
 
-          {/* Botão principal de ação: "+" em quadrado arredondado destacado (estilo pílula F1) */}
+          {/* Espaçamento reservado entre o item de topo e a linha divisória (onde o toggle ">" morde a borda lateral) */}
+          <div className="h-8 w-full shrink-0" />
+
+          {/* Divisor fino cinza claro (conforme imagem de referência) */}
+          <div className="mb-2 h-px w-8 shrink-0 bg-[#e4e7ec]" />
+
+          {/* Botão de ação: "+" em quadrado arredondado sem fundo cinza forte, estilo limpo */}
           {onNewTransaction && (
-            <div className="mb-3 shrink-0">
+            <div className="mb-1.5 shrink-0">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={onNewTransaction}
-                    className="group grid h-11 w-11 place-items-center rounded-2xl bg-fin-primary text-white shadow-[0_4px_14px_rgba(79,70,229,0.35)] transition-all duration-200 hover:scale-[1.05] hover:bg-[#4338ca] hover:shadow-[0_6px_18px_rgba(79,70,229,0.45)] active:scale-95"
+                    className="group grid h-11 w-11 place-items-center rounded-2xl bg-white/70 border border-transparent text-[#222530] transition-all duration-150 hover:bg-white hover:border-fin-border/60 hover:shadow-xs hover:text-[#111322] active:scale-95"
                     aria-label="Novo lançamento"
                   >
-                    <Plus className="h-5 w-5 stroke-[2.4] transition-transform duration-200 group-hover:rotate-90" />
+                    <Plus className="h-5 w-5 stroke-[1.65] transition-transform duration-200 group-hover:rotate-90 text-[#222530]" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="right" className="font-semibold">
@@ -636,60 +668,61 @@ function Sidebar({
             </div>
           )}
 
-          {/* Divisor sutil */}
-          <div className="mb-3 h-px w-8 shrink-0 bg-fin-border/70" />
-
-          {/* Coluna de navegação em rounded-squares centrados e bem espaçados */}
+          {/* Coluna de navegação: quadrados arredondados brancos com sombra sutil e ícones grafite escuro quase preto */}
           <nav className="flex w-full flex-1 flex-col items-center gap-2 py-0.5">
-            {navItems.map((item) => {
-              const isContas = item.to === '/contas'
-              return (
-                <Tooltip key={item.to}>
-                  <TooltipTrigger asChild>
-                    <NavLink
-                      to={item.to}
-                      end={item.exact}
-                      className={({ isActive }) =>
-                        `group relative grid h-11 w-11 place-items-center rounded-2xl transition-all duration-150 ${
-                          isActive
-                            ? 'bg-fin-primary/10 text-fin-primary shadow-sm font-semibold border border-fin-primary/30'
-                            : 'border-0 border-transparent bg-white text-fin-muted shadow-sm hover:bg-fin-surface/80 hover:text-fin-text hover:shadow'
-                        }`
-                      }
-                    >
-                      {({ isActive }) => (
-                        <>
-                          <item.icon
-                            className={`h-5 w-5 shrink-0 transition-transform group-hover:scale-105 ${
-                              isActive ? 'stroke-[2.2]' : 'stroke-[1.8]'
-                            }`}
-                          />
-                          {/* Badge de contas em atraso no ícone de Contas */}
-                          {isContas && overdue > 0 && (
-                            <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-fin-danger px-1 text-[9px] font-bold text-white shadow-xs ring-2 ring-white">
-                              {overdue}
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </NavLink>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="font-medium">
-                    {item.label}
-                    {isContas && overdue > 0 && ` (${overdue} atrasada${overdue > 1 ? 's' : ''})`}
-                  </TooltipContent>
-                </Tooltip>
-              )
-            })}
+            {navItems
+              .filter((item) => item.to !== '/') // O item Início já está no topo destacado
+              .map((item) => {
+                const isContas = item.to === '/contas'
+                return (
+                  <Tooltip key={item.to}>
+                    <TooltipTrigger asChild>
+                      <NavLink
+                        to={item.to}
+                        end={item.exact}
+                        className={({ isActive }) =>
+                          `group relative grid h-11 w-11 place-items-center rounded-2xl transition-all duration-150 ${
+                            isActive
+                              ? 'bg-[#eef0ff] text-[#4f46e5] shadow-xs font-semibold border border-[#dce2ff]'
+                              : 'border border-fin-border/50 bg-white text-[#222530] shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:bg-fin-surface/80 hover:text-[#111322] hover:border-fin-border hover:shadow'
+                          }`
+                        }
+                      >
+                        {({ isActive }) => (
+                          <>
+                            <item.icon
+                              className={`h-5 w-5 shrink-0 transition-transform group-hover:scale-105 ${
+                                isActive
+                                  ? 'stroke-[2] text-[#4f46e5]'
+                                  : 'stroke-[1.65] text-[#222530]'
+                              }`}
+                            />
+                            {/* Badge de contas em atraso no ícone de Contas */}
+                            {isContas && overdue > 0 && (
+                              <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-fin-danger px-1 text-[9px] font-bold text-white shadow-xs ring-2 ring-white">
+                                {overdue}
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </NavLink>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="font-medium">
+                      {item.label}
+                      {isContas && overdue > 0 && ` (${overdue} atrasada${overdue > 1 ? 's' : ''})`}
+                    </TooltipContent>
+                  </Tooltip>
+                )
+              })}
           </nav>
 
           {/* Rodapé compacto: Notificações/Contas, Configurações, Suporte e Avatar */}
-          <div className="mt-auto flex w-full shrink-0 flex-col items-center gap-2 border-t border-fin-border/70 pt-3">
+          <div className="mt-auto flex w-full shrink-0 flex-col items-center gap-2 border-t border-[#e4e7ec] pt-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <NavLink
                   to="/contas?status=atrasadas"
-                  className="relative grid h-10 w-10 place-items-center rounded-xl text-fin-muted transition hover:bg-fin-surface hover:text-fin-danger"
+                  className="relative grid h-10 w-10 place-items-center rounded-xl text-[#222530] transition hover:bg-fin-surface hover:text-fin-danger"
                   aria-label="Contas em atraso"
                 >
                   <Bell className="h-4 w-4 stroke-[1.8]" />
@@ -709,7 +742,7 @@ function Sidebar({
               <TooltipTrigger asChild>
                 <button
                   onClick={onOpenSettings}
-                  className="grid h-10 w-10 place-items-center rounded-xl text-fin-muted transition hover:bg-fin-surface hover:text-fin-text"
+                  className="grid h-10 w-10 place-items-center rounded-xl text-[#222530] transition hover:bg-fin-surface hover:text-[#111322]"
                   aria-label="Configurações"
                 >
                   <Settings className="h-4 w-4 stroke-[1.8]" />
@@ -722,7 +755,7 @@ function Sidebar({
               <TooltipTrigger asChild>
                 <button
                   onClick={onSupport}
-                  className="grid h-10 w-10 place-items-center rounded-xl text-fin-muted transition hover:bg-fin-surface hover:text-fin-text"
+                  className="grid h-10 w-10 place-items-center rounded-xl text-[#222530] transition hover:bg-fin-surface hover:text-[#111322]"
                   aria-label="Ajuda & Suporte"
                 >
                   <CircleHelp className="h-4 w-4 stroke-[1.8]" />

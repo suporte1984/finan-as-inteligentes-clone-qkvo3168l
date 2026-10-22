@@ -219,7 +219,7 @@ export function TransactionModal({
           <DialogTitle className="text-fin-text dark:text-slate-100">
             {transaction ? 'Editar lançamento' : 'Novo lançamento'}
           </DialogTitle>
-          <DialogDescription className="text-fin-muted dark:text-slate-400">
+          <DialogDescription className="text-fin-muted dark:text-slate-300">
             Registre uma entrada ou saída e mantenha seu saldo atualizado.
           </DialogDescription>
         </DialogHeader>

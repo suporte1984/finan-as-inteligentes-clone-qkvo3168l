@@ -346,12 +346,19 @@ function AppShell() {
         open={transactionOpen}
         onOpenChange={setTransactionOpen}
         defaultType={defaultType}
-        onSaved={() =>
-          toast({
-            title: 'Lançamento salvo',
-            description: 'Seu saldo foi atualizado em tempo real.',
-          })
-        }
+        onSaved={(_saved, result) => {
+          if (result?.recurringTransaction) {
+            toast({
+              title: 'Lançamento e recorrência criados!',
+              description: 'O lançamento foi registrado e adicionado à lista de Recorrentes.',
+            })
+          } else {
+            toast({
+              title: 'Lançamento salvo',
+              description: 'Seu saldo foi atualizado em tempo real.',
+            })
+          }
+        }}
       />
       <SearchDialog
         open={searchOpen}

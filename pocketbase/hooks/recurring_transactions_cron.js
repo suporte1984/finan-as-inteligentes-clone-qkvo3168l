@@ -138,14 +138,31 @@ cronAdd('recurring-transactions-daily', '0 12 * * *', () => {
         continue
       }
 
+      // Suporte a parcelamento inteligente nas parcelas subsequentes
+      let txDescription = item.getString('description')
+      let txNotes = 'Lançamento gerado automaticamente por recorrência'
+      const parcelMatch = txDescription.match(/^(.*?)\s*\(Parcelado\s+(\d+)x\)$/i)
+      if (parcelMatch && startYMD) {
+        const baseName = parcelMatch[1].trim()
+        const totalInst = parseInt(parcelMatch[2], 10)
+        const startYear = parseInt(startYMD.slice(0, 4), 10)
+        const startMonth = parseInt(startYMD.slice(5, 7), 10)
+        const targetYear = parseInt(targetDueDateYMD.slice(0, 4), 10)
+        const targetMonth = parseInt(targetDueDateYMD.slice(5, 7), 10)
+        const currentInst = (targetYear - startYear) * 12 + (targetMonth - startMonth) + 1
+        if (currentInst >= 1 && currentInst <= totalInst) {
+          txDescription = baseName + ' (' + currentInst + '/' + totalInst + ')'
+          txNotes = 'Parcela ' + currentInst + ' de ' + totalInst + ' (gerada automaticamente)'
+        }
+      }
+
       // Idempotência adicional: verificar se já existe lançamento idêntico na mesma data para o usuário
-      const description = item.getString('description')
       const amount = item.getFloat('amount')
       const txType = item.getString('type')
       const categoryId = item.getString('category')
       const accountId = item.getString('account')
 
-      const safeDesc = description.replace(/'/g, "\\'")
+      const safeDesc = txDescription.replace(/'/g, "\\'")
       const existingTxs = $app.findRecordsByFilter(
         'transactions',
         "user = '" +
@@ -178,13 +195,13 @@ cronAdd('recurring-transactions-daily', '0 12 * * *', () => {
       const txCol = $app.findCollectionByNameOrId('transactions')
       const txRecord = new Record(txCol)
       txRecord.set('user', userId)
-      txRecord.set('description', description)
+      txRecord.set('description', txDescription)
       txRecord.set('amount', amount)
       txRecord.set('type', txType)
       txRecord.set('date', targetDueDateYMD + ' 12:00:00.000Z')
       txRecord.set('category', categoryId)
       txRecord.set('account', accountId)
-      txRecord.set('notes', 'Lançamento gerado automaticamente por recorrência')
+      txRecord.set('notes', txNotes)
       $app.save(txRecord)
 
       // Atualizar last_run da recorrência
@@ -344,13 +361,29 @@ routerAdd(
           continue
         }
 
-        const description = item.getString('description')
+        let txDescription = item.getString('description')
+        let txNotes = 'Lançamento gerado automaticamente por recorrência'
+        const parcelMatch = txDescription.match(/^(.*?)\s*\(Parcelado\s+(\d+)x\)$/i)
+        if (parcelMatch && startYMD) {
+          const baseName = parcelMatch[1].trim()
+          const totalInst = parseInt(parcelMatch[2], 10)
+          const startYear = parseInt(startYMD.slice(0, 4), 10)
+          const startMonth = parseInt(startYMD.slice(5, 7), 10)
+          const targetYear = parseInt(targetDueDateYMD.slice(0, 4), 10)
+          const targetMonth = parseInt(targetDueDateYMD.slice(5, 7), 10)
+          const currentInst = (targetYear - startYear) * 12 + (targetMonth - startMonth) + 1
+          if (currentInst >= 1 && currentInst <= totalInst) {
+            txDescription = baseName + ' (' + currentInst + '/' + totalInst + ')'
+            txNotes = 'Parcela ' + currentInst + ' de ' + totalInst + ' (gerada automaticamente)'
+          }
+        }
+
         const amount = item.getFloat('amount')
         const txType = item.getString('type')
         const categoryId = item.getString('category')
         const accountId = item.getString('account')
 
-        const safeDesc = description.replace(/'/g, "\\'")
+        const safeDesc = txDescription.replace(/'/g, "\\'")
         const existingTxs = $app.findRecordsByFilter(
           'transactions',
           "user = '" +
@@ -381,13 +414,13 @@ routerAdd(
         const txCol = $app.findCollectionByNameOrId('transactions')
         const txRecord = new Record(txCol)
         txRecord.set('user', userId)
-        txRecord.set('description', description)
+        txRecord.set('description', txDescription)
         txRecord.set('amount', amount)
         txRecord.set('type', txType)
         txRecord.set('date', targetDueDateYMD + ' 12:00:00.000Z')
         txRecord.set('category', categoryId)
         txRecord.set('account', accountId)
-        txRecord.set('notes', 'Lançamento gerado automaticamente por recorrência')
+        txRecord.set('notes', txNotes)
         $app.save(txRecord)
 
         item.set('last_run', targetDueDateYMD + ' 12:00:00.000Z')

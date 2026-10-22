@@ -1,5 +1,16 @@
 import { useEffect, useRef, useState, type DragEvent, type FormEvent } from 'react'
-import { CalendarDays, Check, FileText, Loader2, UploadCloud, X } from 'lucide-react'
+import {
+  CalendarClock,
+  CalendarDays,
+  Check,
+  FileText,
+  Info,
+  Layers,
+  Loader2,
+  Repeat,
+  UploadCloud,
+  X,
+} from 'lucide-react'
 
 import {
   Dialog,
@@ -10,9 +21,20 @@ import {
 } from '@/components/ui/dialog'
 import { useFinance } from '@/contexts/FinanceContext'
 import { extractFieldErrors, getErrorMessage, type FieldErrors } from '@/lib/pocketbase/errors'
-import { todayInput, toDateInput } from '@/lib/format'
-import { createTransaction, updateTransaction } from '@/services/transactions'
-import type { Transaction, TransactionInput, TransactionType } from '@/types/finance'
+import { brl, todayInput, toDateInput } from '@/lib/format'
+import {
+  createTransactionWithRecurrence,
+  updateTransaction,
+  type CreateTransactionResult,
+} from '@/services/transactions'
+import type {
+  RecurrencePeriodType,
+  RecurringFrequency,
+  Transaction,
+  TransactionInput,
+  TransactionRecurrenceConfig,
+  TransactionType,
+} from '@/types/finance'
 import { CategoryTreeSelect } from '@/components/finance/CategoryTreeSelect'
 import { cn } from '@/lib/utils'
 
@@ -21,8 +43,18 @@ interface TransactionModalProps {
   onOpenChange: (open: boolean) => void
   transaction?: Transaction | null
   defaultType?: TransactionType
-  onSaved?: (transaction: Transaction) => void
+  onSaved?: (transaction: Transaction, result?: CreateTransactionResult) => void
 }
+
+const initialRecurrence = (): TransactionRecurrenceConfig => ({
+  enabled: false,
+  mode: 'frequencia',
+  frequency: 'mensal',
+  day_of_month: 5,
+  installmentsCount: 2,
+  installmentAmountType: 'total',
+  endDate: '',
+})
 
 const initialInput = (type: TransactionType): TransactionInput => ({
   type,
@@ -33,6 +65,7 @@ const initialInput = (type: TransactionType): TransactionInput => ({
   account: '',
   notes: '',
   attachment: null,
+  recurrence: initialRecurrence(),
 })
 
 export function TransactionModal({
@@ -44,11 +77,15 @@ export function TransactionModal({
 }: TransactionModalProps) {
   const { accounts, categories } = useFinance()
   const [form, setForm] = useState<TransactionInput>(() => initialInput(defaultType))
+  const [amountStr, setAmountStr] = useState('')
   const [errors, setErrors] = useState<FieldErrors>({})
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const [dragging, setDragging] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  const isEditing = Boolean(transaction)
+  const isRecurring = Boolean(!isEditing && form.recurrence?.enabled)
 
   useEffect(() => {
     if (!open) return
@@ -64,15 +101,40 @@ export function TransactionModal({
         account: transaction.account,
         notes: transaction.notes || '',
         attachment: null,
+        recurrence: initialRecurrence(),
       })
+      setAmountStr(String(transaction.amount))
     } else {
-      setForm(initialInput(defaultType))
+      const today = todayInput()
+      const day = parseInt(today.slice(8, 10), 10) || 5
+      setForm({
+        ...initialInput(defaultType),
+        date: today,
+        recurrence: {
+          ...initialRecurrence(),
+          day_of_month: day,
+        },
+      })
+      setAmountStr('')
     }
   }, [open, transaction, defaultType])
 
   function set<K extends keyof TransactionInput>(key: K, value: TransactionInput[K]) {
     setForm((current) => ({ ...current, [key]: value }))
     setErrors((current) => ({ ...current, [key]: '' }))
+  }
+
+  function setRecurrence<K extends keyof TransactionRecurrenceConfig>(
+    key: K,
+    value: TransactionRecurrenceConfig[K],
+  ) {
+    setForm((current) => ({
+      ...current,
+      recurrence: {
+        ...(current.recurrence || initialRecurrence()),
+        [key]: value,
+      },
+    }))
   }
 
   function validateFile(file: File) {
@@ -99,19 +161,48 @@ export function TransactionModal({
     event.preventDefault()
     const localErrors: FieldErrors = {}
     if (!form.description.trim()) localErrors.description = 'Informe uma descrição.'
-    if (!form.amount || form.amount <= 0) localErrors.amount = 'Informe um valor maior que zero.'
+    const numAmount = parseFloat(amountStr.replace(',', '.'))
+    if (isNaN(numAmount) || numAmount <= 0) localErrors.amount = 'Informe um valor maior que zero.'
     if (!form.date) localErrors.date = 'Informe a data.'
     if (!form.category) localErrors.category = 'Selecione uma categoria.'
     if (!form.account) localErrors.account = 'Selecione uma conta.'
+
+    if (isRecurring && form.recurrence) {
+      if (form.recurrence.mode === 'parcelas') {
+        const inst = Number(form.recurrence.installmentsCount)
+        if (isNaN(inst) || inst < 2 || inst > 120) {
+          localErrors.installmentsCount = 'Informe entre 2 e 120 parcelas.'
+        }
+      } else {
+        if (form.recurrence.frequency === 'mensal' || form.recurrence.frequency === 'anual') {
+          const dom = Number(form.recurrence.day_of_month)
+          if (isNaN(dom) || dom < 1 || dom > 31) {
+            localErrors.day_of_month = 'Informe um dia entre 1 e 31.'
+          }
+        }
+        if (form.recurrence.endDate && form.recurrence.endDate < form.date) {
+          localErrors.endDate = 'Data de término deve ser igual ou posterior à data de início.'
+        }
+      }
+    }
+
     if (Object.keys(localErrors).length) return setErrors(localErrors)
 
     setSaving(true)
     setMessage('')
     try {
-      const saved = transaction
-        ? await updateTransaction(transaction.id, form)
-        : await createTransaction(form)
-      onSaved?.(saved)
+      const payload: TransactionInput = {
+        ...form,
+        amount: numAmount,
+      }
+
+      if (transaction) {
+        const saved = await updateTransaction(transaction.id, payload)
+        onSaved?.(saved)
+      } else {
+        const result = await createTransactionWithRecurrence(payload)
+        onSaved?.(result.transaction, result)
+      }
       onOpenChange(false)
     } catch (error) {
       setErrors(extractFieldErrors(error))
@@ -163,8 +254,11 @@ export function TransactionModal({
                   type="number"
                   min="0.01"
                   step="0.01"
-                  value={form.amount || ''}
-                  onChange={(event) => set('amount', Number(event.target.value))}
+                  value={amountStr}
+                  onChange={(event) => {
+                    setAmountStr(event.target.value)
+                    set('amount', parseFloat(event.target.value) || 0)
+                  }}
                   placeholder="0,00"
                 />
               </div>
@@ -176,11 +270,236 @@ export function TransactionModal({
                   className="field pl-10"
                   type="date"
                   value={form.date}
-                  onChange={(event) => set('date', event.target.value)}
+                  onChange={(event) => {
+                    const newDate = event.target.value
+                    set('date', newDate)
+                    if (newDate && !transaction) {
+                      const day = parseInt(newDate.slice(8, 10), 10)
+                      if (day && day >= 1 && day <= 31) {
+                        setRecurrence('day_of_month', day)
+                      }
+                    }
+                  }}
                 />
               </div>
             </Field>
           </div>
+
+          {/* Seção de Recorrência (disponível na criação do lançamento) */}
+          {!isEditing && (
+            <div className="rounded-2xl border border-fin-border bg-gradient-to-b from-indigo-50/40 via-white to-white p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className={cn(
+                      'grid h-8 w-8 place-items-center rounded-lg transition-colors',
+                      form.recurrence?.enabled
+                        ? 'bg-fin-primary text-white shadow-xs'
+                        : 'bg-fin-surface text-fin-muted',
+                    )}
+                  >
+                    <Repeat className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="tx-recurring-toggle"
+                      className="text-sm font-semibold text-fin-text cursor-pointer select-none"
+                    >
+                      Lançamento recorrente
+                    </label>
+                    <p className="text-xs text-fin-muted">
+                      Cadastre uma regra automática ou parcele este lançamento.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Switch / Toggle */}
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    id="tx-recurring-toggle"
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={form.recurrence?.enabled ?? false}
+                    onChange={(e) => setRecurrence('enabled', e.target.checked)}
+                  />
+                  <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-fin-primary" />
+                </label>
+              </div>
+
+              {form.recurrence?.enabled && (
+                <div className="space-y-4 pt-3 border-t border-fin-border/70 animate-fade-in">
+                  {/* Seleção do Modo: Período/Frequência OU Quantidade de Parcelas */}
+                  <div className="grid grid-cols-2 gap-2 rounded-xl bg-fin-surface p-1">
+                    <button
+                      type="button"
+                      onClick={() => setRecurrence('mode', 'frequencia')}
+                      className={cn(
+                        'flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition',
+                        form.recurrence?.mode === 'frequencia'
+                          ? 'bg-white text-fin-primary shadow-xs'
+                          : 'text-fin-muted hover:text-fin-text',
+                      )}
+                    >
+                      <CalendarClock className="h-3.5 w-3.5" />
+                      Período / Frequência
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRecurrence('mode', 'parcelas')}
+                      className={cn(
+                        'flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition',
+                        form.recurrence?.mode === 'parcelas'
+                          ? 'bg-white text-fin-primary shadow-xs'
+                          : 'text-fin-muted hover:text-fin-text',
+                      )}
+                    >
+                      <Layers className="h-3.5 w-3.5" />
+                      Dividir em Parcelas
+                    </button>
+                  </div>
+
+                  {/* Modo 1: Período / Frequência contínua */}
+                  {form.recurrence?.mode === 'frequencia' && (
+                    <div className="space-y-3">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Field label="Frequência" error={errors.frequency}>
+                          <select
+                            className="field py-1.5 text-sm"
+                            value={form.recurrence?.frequency || 'mensal'}
+                            onChange={(e) =>
+                              setRecurrence('frequency', e.target.value as RecurringFrequency)
+                            }
+                          >
+                            <option value="mensal">Mensal (todo mês)</option>
+                            <option value="semanal">Semanal (a cada 7 dias)</option>
+                            <option value="quinzenal">Quinzenal (a cada 14 dias)</option>
+                            <option value="anual">Anual (uma vez por ano)</option>
+                          </select>
+                        </Field>
+
+                        {(form.recurrence?.frequency === 'mensal' ||
+                          form.recurrence?.frequency === 'anual') && (
+                          <Field label="Dia do mês (vencimento)" error={errors.day_of_month}>
+                            <input
+                              className="field py-1.5 text-sm"
+                              type="number"
+                              min="1"
+                              max="31"
+                              value={form.recurrence?.day_of_month || 1}
+                              onChange={(e) =>
+                                setRecurrence('day_of_month', parseInt(e.target.value, 10) || 1)
+                              }
+                              placeholder="Ex: 5"
+                            />
+                          </Field>
+                        )}
+                      </div>
+
+                      <Field label="Data de término (opcional)" error={errors.endDate}>
+                        <div className="relative">
+                          <CalendarDays className="absolute left-3 top-2.5 h-4 w-4 text-fin-muted" />
+                          <input
+                            className="field pl-10 py-1.5 text-sm"
+                            type="date"
+                            value={form.recurrence?.endDate || ''}
+                            onChange={(e) => setRecurrence('endDate', e.target.value)}
+                            placeholder="Deixe em branco para recorrência contínua"
+                          />
+                        </div>
+                        <span className="text-[11px] text-fin-muted">
+                          Deixe em branco para repetir indeterminadamente até pausar.
+                        </span>
+                      </Field>
+                    </div>
+                  )}
+
+                  {/* Modo 2: Parcelas */}
+                  {form.recurrence?.mode === 'parcelas' && (
+                    <div className="space-y-3">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Field label="Quantidade de parcelas" error={errors.installmentsCount}>
+                          <select
+                            className="field py-1.5 text-sm"
+                            value={form.recurrence?.installmentsCount || 2}
+                            onChange={(e) =>
+                              setRecurrence('installmentsCount', parseInt(e.target.value, 10) || 2)
+                            }
+                          >
+                            {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 18, 24, 36, 48, 60].map((n) => (
+                              <option key={n} value={n}>
+                                {n}x parcelas
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+
+                        <Field
+                          label="O valor informado acima é:"
+                          error={errors.installmentAmountType}
+                        >
+                          <select
+                            className="field py-1.5 text-sm"
+                            value={form.recurrence?.installmentAmountType || 'total'}
+                            onChange={(e) =>
+                              setRecurrence(
+                                'installmentAmountType',
+                                e.target.value as 'total' | 'parcela',
+                              )
+                            }
+                          >
+                            <option value="total">Valor Total da Compra / Entrada</option>
+                            <option value="parcela">Valor de Cada Parcela</option>
+                          </select>
+                        </Field>
+                      </div>
+
+                      {/* Resumo explicativo do cálculo da parcela */}
+                      {(() => {
+                        const count = form.recurrence?.installmentsCount || 2
+                        const currentVal = parseFloat(amountStr.replace(',', '.')) || 0
+                        const isTotal = form.recurrence?.installmentAmountType !== 'parcela'
+                        const installmentVal = isTotal ? currentVal / count : currentVal
+                        const totalVal = isTotal ? currentVal : currentVal * count
+
+                        return (
+                          <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 text-xs text-indigo-950">
+                            <div className="flex items-start gap-2">
+                              <Info className="h-4 w-4 text-fin-primary shrink-0 mt-0.5" />
+                              <div className="space-y-0.5">
+                                <p className="font-semibold text-fin-primary">
+                                  Resumo das {count} parcelas:
+                                </p>
+                                <p>
+                                  Serão{' '}
+                                  <strong>
+                                    {count}x de {brl.format(installmentVal)}
+                                  </strong>{' '}
+                                  (Total: <strong>{brl.format(totalVal)}</strong>).
+                                </p>
+                                <p className="text-[11px] text-indigo-900/80">
+                                  A 1ª parcela será lançada hoje e a regra com as próximas{' '}
+                                  {count - 1} parcelas mensais será cadastrada automaticamente em{' '}
+                                  <strong>Recorrentes</strong>.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  )}
+
+                  <div className="rounded-lg bg-emerald-50/60 p-2.5 text-xs text-emerald-900 flex items-center gap-2">
+                    <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <span>
+                      Ao salvar, este lançamento aparecerá automaticamente na página{' '}
+                      <strong>Recorrentes</strong> com a frequência e vencimentos definidos.
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <Field label="Descrição" error={errors.description}>
             <input

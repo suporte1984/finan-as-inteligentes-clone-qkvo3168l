@@ -112,6 +112,18 @@ export interface AiReport extends RecordModel {
   message?: string
 }
 
+export type RecurrencePeriodType = 'frequencia' | 'parcelas'
+
+export interface TransactionRecurrenceConfig {
+  enabled: boolean
+  mode: RecurrencePeriodType // 'frequencia' (contínuo/período) ou 'parcelas' (quantidade fixa)
+  frequency: RecurringFrequency // 'mensal' | 'semanal' | 'quinzenal' | 'anual'
+  day_of_month?: number
+  installmentsCount?: number // ex: 2 a 96 parcelas
+  installmentAmountType?: 'total' | 'parcela' // se o valor informado no form é o total ou o valor de cada parcela
+  endDate?: string // opcional para modo frequência
+}
+
 export interface TransactionInput {
   description: string
   amount: number
@@ -121,6 +133,7 @@ export interface TransactionInput {
   account: string
   notes?: string
   attachment?: File | null
+  recurrence?: TransactionRecurrenceConfig
 }
 
 export interface BillInput {

@@ -1,6 +1,13 @@
 import pb from '@/lib/pocketbase/client'
 import { escapeFilter } from '@/lib/format'
-import type { Transaction, TransactionInput } from '@/types/finance'
+import { createRecurringTransaction } from '@/services/recurring'
+import type { RecurringTransaction, Transaction, TransactionInput } from '@/types/finance'
+
+export interface CreateTransactionResult {
+  transaction: Transaction
+  recurringTransaction?: RecurringTransaction
+  futureTransactionsCreated?: number
+}
 
 export function listTransactions(filter = '', sort = '-date') {
   return pb.collection<Transaction>('transactions').getFullList({
@@ -24,10 +31,135 @@ function toPayload(input: TransactionInput) {
   return form
 }
 
-export function createTransaction(input: TransactionInput) {
-  return pb
+export async function createTransaction(input: TransactionInput): Promise<Transaction> {
+  const result = await createTransactionWithRecurrence(input)
+  return result.transaction
+}
+
+export async function createTransactionWithRecurrence(
+  input: TransactionInput,
+): Promise<CreateTransactionResult> {
+  const recurrence = input.recurrence
+
+  // Se NÃO for recorrente, cria simplesmente o lançamento único tradicional
+  if (!recurrence || !recurrence.enabled) {
+    const transaction = await pb
+      .collection<Transaction>('transactions')
+      .create(toPayload(input), { expand: 'category,account' })
+    return { transaction }
+  }
+
+  const baseDateStr = input.date // 'YYYY-MM-DD'
+  const [baseY, baseM, baseD] = baseDateStr.split('-').map(Number)
+  const dayOfMonth = recurrence.day_of_month || baseD || 1
+
+  // 1. MODO PARCELAS
+  if (recurrence.mode === 'parcelas') {
+    const totalInstallments = Math.max(2, recurrence.installmentsCount || 2)
+    // Se o valor digitado for o total, divide pelo número de parcelas; se for valor da parcela, usa direto
+    const installmentAmount =
+      recurrence.installmentAmountType === 'total'
+        ? Number((input.amount / totalInstallments).toFixed(2))
+        : input.amount
+
+    // Ajuste de centavos na primeira parcela se for valor total dividido
+    const remainder =
+      recurrence.installmentAmountType === 'total'
+        ? Number((input.amount - installmentAmount * totalInstallments).toFixed(2))
+        : 0
+
+    const firstAmount = Number((installmentAmount + remainder).toFixed(2))
+
+    // Calcula a data final (data da última parcela)
+    const lastDate = new Date(Date.UTC(baseY, baseM - 1 + (totalInstallments - 1), 1))
+    const daysInLastMonth = new Date(
+      Date.UTC(lastDate.getUTCFullYear(), lastDate.getUTCMonth() + 1, 0),
+    ).getUTCDate()
+    const lastDay = Math.min(dayOfMonth, daysInLastMonth)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const endDateStr = `${lastDate.getUTCFullYear()}-${pad(lastDate.getUTCMonth() + 1)}-${pad(lastDay)}`
+
+    // Cria a regra na coleção 'recurring_transactions' para aparecer na página Recorrentes
+    const recurringRecord = await createRecurringTransaction({
+      description: `${input.description} (Parcelado ${totalInstallments}x)`,
+      amount: installmentAmount,
+      type: input.type,
+      frequency: recurrence.frequency || 'mensal',
+      day_of_month: dayOfMonth,
+      start_date: baseDateStr,
+      end_date: endDateStr,
+      category: input.category,
+      account: input.account,
+      active: true,
+    })
+
+    // Cria o 1º lançamento imediatamente
+    const firstInput: TransactionInput = {
+      ...input,
+      description: `${input.description} (1/${totalInstallments})`,
+      amount: firstAmount,
+      notes: input.notes
+        ? `${input.notes} • Parcela 1 de ${totalInstallments}`
+        : `Parcela 1 de ${totalInstallments}`,
+    }
+
+    const firstTransaction = await pb
+      .collection<Transaction>('transactions')
+      .create(toPayload(firstInput), { expand: 'category,account' })
+
+    // Atualiza last_run da recorrência com a data do 1º lançamento para o cron não duplicar hoje
+    await pb
+      .collection('recurring_transactions')
+      .update(recurringRecord.id, {
+        last_run: `${baseDateStr} 12:00:00.000Z`,
+      })
+      .catch(() => null)
+
+    return {
+      transaction: firstTransaction,
+      recurringTransaction: recurringRecord,
+      futureTransactionsCreated: 0,
+    }
+  }
+
+  // 2. MODO FREQUÊNCIA CONTÍNUA (mensal, semanal, quinzenal, anual)
+  const recurringRecord = await createRecurringTransaction({
+    description: input.description,
+    amount: input.amount,
+    type: input.type,
+    frequency: recurrence.frequency,
+    day_of_month: dayOfMonth,
+    start_date: baseDateStr,
+    end_date: recurrence.endDate || undefined,
+    category: input.category,
+    account: input.account,
+    active: true,
+  })
+
+  // Cria o primeiro lançamento imediatamente para a data inicial informada
+  const firstInput: TransactionInput = {
+    ...input,
+    notes: input.notes
+      ? `${input.notes} • Lançamento recorrente (${recurrence.frequency})`
+      : `Lançamento recorrente (${recurrence.frequency})`,
+  }
+
+  const firstTransaction = await pb
     .collection<Transaction>('transactions')
-    .create(toPayload(input), { expand: 'category,account' })
+    .create(toPayload(firstInput), { expand: 'category,account' })
+
+  // Marca last_run na recorrência para registrar que o primeiro já foi executado
+  await pb
+    .collection('recurring_transactions')
+    .update(recurringRecord.id, {
+      last_run: `${baseDateStr} 12:00:00.000Z`,
+    })
+    .catch(() => null)
+
+  return {
+    transaction: firstTransaction,
+    recurringTransaction: recurringRecord,
+  }
 }
 
 export function updateTransaction(id: string, input: TransactionInput) {

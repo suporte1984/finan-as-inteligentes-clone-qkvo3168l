@@ -673,16 +673,23 @@ export default function TransactionsPage() {
         onOpenChange={setModalOpen}
         transaction={editing}
         defaultType={(tab === 'receita' ? 'receita' : 'despesa') as TransactionType}
-        onSaved={(saved) => {
+        onSaved={(saved, result) => {
           setTransactions((current) =>
             editing
               ? current.map((item) => (item.id === saved.id ? saved : item))
               : [saved, ...current],
           )
-          toast({
-            title: editing ? 'Lançamento atualizado' : 'Lançamento criado',
-            description: 'As informações já estão refletidas no dashboard.',
-          })
+          if (result?.recurringTransaction) {
+            toast({
+              title: 'Lançamento e recorrência criados!',
+              description: 'O lançamento foi registrado e adicionado à lista de Recorrentes.',
+            })
+          } else {
+            toast({
+              title: editing ? 'Lançamento atualizado' : 'Lançamento criado',
+              description: 'As informações já estão refletidas no dashboard.',
+            })
+          }
           setEditing(null)
         }}
       />

@@ -470,9 +470,14 @@ function RecurringRow({
       const effectiveDay = Math.min(day, daysInTargetMonth)
 
       const d = new Date(Date.UTC(targetYear, targetMonthIdx, effectiveDay, 12, 0, 0))
+      // Se a data calculada for posterior à end_date, a recorrência já terminou
+      if (item.end_date) {
+        const endYMD = item.end_date.slice(0, 10)
+        const dYMD = d.toISOString().slice(0, 10)
+        if (dYMD > endYMD) return null
+      }
       return d.toISOString()
     }
-
     if (item.frequency === 'semanal') {
       const base = item.last_run ? new Date(item.last_run.replace(' ', 'T')) : new Date()
       base.setUTCDate(base.getUTCDate() + 7)

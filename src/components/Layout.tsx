@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   CircleHelp,
   CreditCard,
   FolderTree,
@@ -36,6 +38,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useToast } from '@/hooks/use-toast'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useAuth } from '@/contexts/AuthContext'
@@ -85,6 +88,67 @@ function AppShell() {
   const [supportOpen, setSupportOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [profileName, setProfileName] = useState(String(user?.name || ''))
+
+  // Estado recolhível da sidebar (persistente no localStorage)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    try {
+      return localStorage.getItem('fin_sidebar_collapsed') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem('fin_sidebar_collapsed', String(next))
+      } catch {
+        // ignore
+      }
+      return next
+    })
+  }
+
+  // Barra superior recolhível no scroll (hide on scroll down, show on scroll up)
+  const [headerHidden, setHeaderHidden] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const lastScrollYRef = useRef(0)
+
+  useEffect(() => {
+    let ticking = false
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentY = window.scrollY
+          const delta = currentY - lastScrollYRef.current
+
+          setIsScrolled(currentY > 12)
+
+          // Só recolhe quando já rolou um pouco da página
+          if (currentY > 80) {
+            if (delta > 8) {
+              // Rolando para baixo
+              setHeaderHidden(true)
+            } else if (delta < -8) {
+              // Rolando para cima
+              setHeaderHidden(false)
+            }
+          } else {
+            setHeaderHidden(false)
+          }
+
+          lastScrollYRef.current = currentY
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const reloadBills = () =>
     listBills()
@@ -193,228 +257,284 @@ function AppShell() {
     }
   }
 
-  const sidebar = (
-    <Sidebar
-      user={user}
-      overdue={overdue}
-      nextSeven={nextSeven}
-      onSupport={() => setSupportOpen(true)}
-      onManageUsers={() => navigate('/usuarios')}
-      onOpenSettings={() => navigate('/configuracoes')}
-    />
-  )
-
   return (
-    <div className="min-h-screen bg-[#f4f5f8] text-fin-text">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-fin-border bg-[#f8f9fb] lg:block shadow-xs">
-        {sidebar}
-      </aside>
-      {menuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button
-            className="absolute inset-0 bg-fin-text/25 backdrop-blur-[2px]"
-            onClick={() => setMenuOpen(false)}
-            aria-label="Fechar menu"
+    <TooltipProvider delayDuration={150}>
+      <div className="min-h-screen bg-[#f4f5f8] text-fin-text">
+        {/* SIDEBAR FLUTUANTE E RECOLHÍVEL (DESKTOP) */}
+        <aside
+          aria-label="Menu principal"
+          className={`fixed left-3 top-3 bottom-3 z-40 hidden flex-col rounded-2xl border border-fin-border bg-white/95 backdrop-blur-md transition-all duration-300 ease-in-out lg:flex ${
+            sidebarCollapsed ? 'w-[72px]' : 'w-64'
+          } shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.09)]`}
+        >
+          <Sidebar
+            user={user}
+            overdue={overdue}
+            nextSeven={nextSeven}
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={toggleSidebar}
+            onSupport={() => setSupportOpen(true)}
+            onManageUsers={() => navigate('/usuarios')}
+            onOpenSettings={() => navigate('/configuracoes')}
           />
-          <aside className="relative h-full w-[86vw] max-w-72 border-r border-fin-border bg-fin-sidebar shadow-xl">
-            <button
-              className="absolute right-4 top-5 rounded-lg p-2 text-fin-muted hover:bg-white"
-              onClick={() => setMenuOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </button>
-            {sidebar}
-          </aside>
-        </div>
-      )}
+        </aside>
 
-      <header className="fixed left-0 right-0 top-0 z-30 flex h-[76px] items-center gap-3 border-b border-fin-border bg-white/95 px-4 backdrop-blur md:px-7 lg:left-64">
-        <button
-          className="rounded-xl border border-fin-border p-2.5 lg:hidden"
-          onClick={() => setMenuOpen(true)}
-          aria-label="Abrir menu"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-        <button
-          onClick={() => setSearchOpen(true)}
-          className="group flex h-11 min-w-0 flex-1 items-center gap-3 rounded-xl border border-fin-border bg-white px-3 text-left text-sm text-fin-muted shadow-[0_1px_2px_rgba(25,25,39,.03)] transition hover:border-fin-primary/40 md:max-w-xl"
-        >
-          <Search className="h-4 w-4 shrink-0" />
-          <span className="truncate">Buscar lançamentos...</span>
-          <kbd className="ml-auto hidden rounded-md border border-fin-border bg-fin-surface px-2 py-0.5 text-xs text-fin-muted sm:block">
-            ⌘ K
-          </kbd>
-        </button>
-        <div className="ml-auto flex items-center gap-2.5 sm:gap-3">
-          <button
-            onClick={() => {
-              setDefaultType('despesa')
-              setTransactionOpen(true)
-            }}
-            className="btn-primary hidden md:flex"
-          >
-            <Plus className="h-4 w-4" />
-            Novo lançamento
-          </button>
-          <button
-            onClick={() => navigate('/contas?status=atrasadas')}
-            className="relative rounded-full bg-fin-surface p-3 text-fin-muted transition hover:text-fin-primary"
-            aria-label={`${overdue} notificações`}
-          >
-            <Bell className="h-5 w-5" />
-            {overdue > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-fin-danger px-1 text-[10px] font-bold text-white">
-                {overdue}
-              </span>
-            )}
-          </button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 rounded-full p-1 transition hover:bg-fin-surface">
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-fin-text text-xs font-bold text-white">
-                  {initials}
-                </span>
-                <ChevronDown className="hidden h-4 w-4 text-fin-muted sm:block" />
+        {/* DRAWER RESPONSIVO (MOBILE / TABLET) */}
+        {menuOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <button
+              className="absolute inset-0 bg-fin-text/25 backdrop-blur-[2px] transition-opacity"
+              onClick={() => setMenuOpen(false)}
+              aria-label="Fechar menu"
+            />
+            <aside className="relative m-3 h-[calc(100vh-24px)] w-[86vw] max-w-72 rounded-2xl border border-fin-border bg-white shadow-2xl overflow-hidden flex flex-col">
+              <button
+                className="absolute right-3.5 top-3.5 z-10 rounded-lg p-2 text-fin-muted hover:bg-fin-surface transition"
+                onClick={() => setMenuOpen(false)}
+                aria-label="Fechar navegação"
+              >
+                <X className="h-5 w-5" />
               </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 border-fin-border">
-              <DropdownMenuLabel>
-                <span className="block text-sm">{user?.name || firstName}</span>
-                <span className="block truncate text-xs font-normal text-fin-muted">
-                  {user?.email}
-                </span>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
+              <Sidebar
+                user={user}
+                overdue={overdue}
+                nextSeven={nextSeven}
+                collapsed={false}
+                isMobile
+                onSupport={() => {
+                  setMenuOpen(false)
+                  setSupportOpen(true)
+                }}
+                onManageUsers={() => {
+                  setMenuOpen(false)
                   navigate('/usuarios')
                 }}
-              >
-                <Users className="mr-2 h-4 w-4" />
-                Gerenciar usuários
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
+                onOpenSettings={() => {
+                  setMenuOpen(false)
                   navigate('/configuracoes')
                 }}
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Configurações
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setProfileName(String(user?.name || ''))
-                  setSettingsOpen(true)
-                }}
-              >
-                <Users className="mr-2 h-4 w-4" />
-                Editar perfil
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  logout()
-                  navigate('/login')
-                }}
-                className="text-fin-danger"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sair
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </header>
-
-      <main className="min-h-screen bg-[#f4f5f8] pt-[76px] lg:pl-64">
-        <div className="mx-auto w-full max-w-[1360px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          <Outlet />
-        </div>
-      </main>
-      <button
-        onClick={() => {
-          setDefaultType('despesa')
-          setTransactionOpen(true)
-        }}
-        className="fixed bottom-5 right-5 z-30 grid h-14 w-14 place-items-center rounded-full bg-fin-primary text-white shadow-[0_8px_24px_rgba(91,95,239,.35)] md:hidden"
-        aria-label="Novo lançamento"
-      >
-        <Plus className="h-6 w-6" />
-      </button>
-
-      <TransactionModal
-        open={transactionOpen}
-        onOpenChange={setTransactionOpen}
-        defaultType={defaultType}
-        onSaved={(_saved, result) => {
-          if (result?.recurringTransaction) {
-            toast({
-              title: 'Lançamento e recorrência criados!',
-              description: 'O lançamento foi registrado e adicionado à lista de Recorrentes.',
-            })
-          } else {
-            toast({
-              title: 'Lançamento salvo',
-              description: 'Seu saldo foi atualizado em tempo real.',
-            })
-          }
-        }}
-      />
-      <SearchDialog
-        open={searchOpen}
-        onOpenChange={setSearchOpen}
-        query={query}
-        setQuery={setQuery}
-        results={results}
-        searching={searching}
-        onSelect={(result) => {
-          setSearchOpen(false)
-          navigate(`/lancamentos?q=${encodeURIComponent(result.description)}`)
-        }}
-      />
-      <Dialog open={supportOpen} onOpenChange={setSupportOpen}>
-        <DialogContent className="border-fin-border sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Ajuda & Suporte</DialogTitle>
-            <DialogDescription>Precisa de ajuda para organizar suas finanças?</DialogDescription>
-          </DialogHeader>
-          <div className="rounded-xl bg-fin-surface p-4 text-sm leading-6 text-fin-muted">
-            <p className="font-medium text-fin-text">Atendimento Finanças Inteligentes</p>
-            <p>
-              Envie uma mensagem para suporte@financasinteligentes.com.br. Respondemos em até um dia
-              útil.
-            </p>
+              />
+            </aside>
           </div>
-          <a className="btn-primary w-full" href="mailto:suporte@financasinteligentes.com.br">
-            <CircleHelp className="h-4 w-4" />
-            Falar com o suporte
-          </a>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="border-fin-border sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Configurações do perfil</DialogTitle>
-            <DialogDescription>Atualize como seu nome aparece no sistema.</DialogDescription>
-          </DialogHeader>
-          <label className="space-y-1.5">
-            <span className="text-[13px] font-medium">Nome</span>
-            <input
-              className="field"
-              value={profileName}
-              onChange={(event) => setProfileName(event.target.value)}
-            />
-          </label>
-          <label className="space-y-1.5">
-            <span className="text-[13px] font-medium">E-mail</span>
-            <input className="field bg-fin-surface" value={String(user?.email || '')} disabled />
-          </label>
-          <button className="btn-primary w-full" onClick={() => void saveProfile()}>
-            Salvar configurações
-          </button>
-        </DialogContent>
-      </Dialog>
-    </div>
+        )}
+
+        {/* BARRA SUPERIOR FLUTUANTE E RECOLHÍVEL (HEADER) */}
+        <div
+          className={`fixed top-3 right-3 z-30 transition-all duration-300 ease-in-out ${
+            sidebarCollapsed ? 'left-3 lg:left-[96px]' : 'left-3 lg:left-[284px]'
+          } ${
+            headerHidden
+              ? '-translate-y-24 opacity-0 pointer-events-none'
+              : 'translate-y-0 opacity-100 pointer-events-auto'
+          }`}
+        >
+          <header
+            className={`flex h-[66px] items-center gap-3 rounded-2xl border border-fin-border bg-white/95 px-3 sm:px-5 backdrop-blur-md transition-shadow duration-200 ${
+              isScrolled
+                ? 'shadow-[0_10px_30px_rgba(17,24,39,0.08)]'
+                : 'shadow-[0_4px_18px_rgba(17,24,39,0.04)]'
+            }`}
+          >
+            <button
+              className="rounded-xl border border-fin-border p-2.5 text-fin-text hover:bg-fin-surface transition lg:hidden"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Abrir menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="group flex h-10 min-w-0 flex-1 items-center gap-3 rounded-xl border border-fin-border bg-white/80 px-3 text-left text-sm text-fin-muted shadow-[0_1px_2px_rgba(25,25,39,.03)] transition hover:border-fin-primary/40 hover:bg-white md:max-w-xl"
+            >
+              <Search className="h-4 w-4 shrink-0 text-fin-muted group-hover:text-fin-primary transition-colors" />
+              <span className="truncate">Buscar lançamentos...</span>
+              <kbd className="ml-auto hidden rounded-md border border-fin-border bg-fin-surface px-2 py-0.5 text-xs text-fin-muted sm:block">
+                ⌘ K
+              </kbd>
+            </button>
+
+            <div className="ml-auto flex items-center gap-2 sm:gap-2.5">
+              <button
+                onClick={() => {
+                  setDefaultType('despesa')
+                  setTransactionOpen(true)
+                }}
+                className="btn-primary !min-h-[38px] !py-2 hidden md:flex text-xs sm:text-sm font-semibold shadow-xs"
+              >
+                <Plus className="h-4 w-4" />
+                Novo lançamento
+              </button>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => navigate('/contas?status=atrasadas')}
+                    className="relative grid h-10 w-10 place-items-center rounded-xl border border-transparent bg-fin-surface/80 text-fin-muted transition hover:border-fin-border hover:bg-fin-surface hover:text-fin-primary"
+                    aria-label={`${overdue} notificações`}
+                  >
+                    <Bell className="h-4 w-4" />
+                    {overdue > 0 && (
+                      <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-fin-danger px-1 text-[10px] font-bold text-white ring-2 ring-white">
+                        {overdue}
+                      </span>
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {overdue > 0 ? `${overdue} conta(s) em atraso` : 'Notificações'}
+                </TooltipContent>
+              </Tooltip>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 rounded-xl p-1 transition hover:bg-fin-surface focus:outline-none">
+                    <span className="grid h-9 w-9 place-items-center rounded-lg bg-fin-text text-xs font-bold text-white shadow-xs">
+                      {initials}
+                    </span>
+                    <ChevronDown className="hidden h-3.5 w-3.5 text-fin-muted sm:block" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 border-fin-border shadow-lg">
+                  <DropdownMenuLabel>
+                    <span className="block text-sm font-semibold text-fin-text">
+                      {user?.name || firstName}
+                    </span>
+                    <span className="block truncate text-xs font-normal text-fin-muted">
+                      {user?.email}
+                    </span>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/usuarios')}>
+                    <Users className="mr-2 h-4 w-4" />
+                    Gerenciar usuários
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/configuracoes')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Configurações
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setProfileName(String(user?.name || ''))
+                      setSettingsOpen(true)
+                    }}
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Editar perfil
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      logout()
+                      navigate('/login')
+                    }}
+                    className="text-fin-danger focus:text-fin-danger focus:bg-red-50"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </header>
+        </div>
+
+        {/* CONTEÚDO PRINCIPAL (COM PADDING DINÂMICO PARA SE AJUSTAR À SIDEBAR E HEADER) */}
+        <main
+          className={`min-h-screen bg-[#f4f5f8] pt-[90px] transition-all duration-300 ease-in-out ${
+            sidebarCollapsed ? 'lg:pl-[84px]' : 'lg:pl-[276px]'
+          }`}
+        >
+          <div className="mx-auto w-full max-w-[1360px] px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+            <Outlet />
+          </div>
+        </main>
+
+        <button
+          onClick={() => {
+            setDefaultType('despesa')
+            setTransactionOpen(true)
+          }}
+          className="fixed bottom-5 right-5 z-30 grid h-14 w-14 place-items-center rounded-full bg-fin-primary text-white shadow-[0_8px_24px_rgba(91,95,239,.35)] md:hidden"
+          aria-label="Novo lançamento"
+        >
+          <Plus className="h-6 w-6" />
+        </button>
+
+        <TransactionModal
+          open={transactionOpen}
+          onOpenChange={setTransactionOpen}
+          defaultType={defaultType}
+          onSaved={(_saved, result) => {
+            if (result?.recurringTransaction) {
+              toast({
+                title: 'Lançamento e recorrência criados!',
+                description: 'O lançamento foi registrado e adicionado à lista de Recorrentes.',
+              })
+            } else {
+              toast({
+                title: 'Lançamento salvo',
+                description: 'Seu saldo foi atualizado em tempo real.',
+              })
+            }
+          }}
+        />
+        <SearchDialog
+          open={searchOpen}
+          onOpenChange={setSearchOpen}
+          query={query}
+          setQuery={setQuery}
+          results={results}
+          searching={searching}
+          onSelect={(result) => {
+            setSearchOpen(false)
+            navigate(`/lancamentos?q=${encodeURIComponent(result.description)}`)
+          }}
+        />
+        <Dialog open={supportOpen} onOpenChange={setSupportOpen}>
+          <DialogContent className="border-fin-border sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Ajuda & Suporte</DialogTitle>
+              <DialogDescription>Precisa de ajuda para organizar suas finanças?</DialogDescription>
+            </DialogHeader>
+            <div className="rounded-xl bg-fin-surface p-4 text-sm leading-6 text-fin-muted">
+              <p className="font-medium text-fin-text">Atendimento Finanças Inteligentes</p>
+              <p>
+                Envie uma mensagem para suporte@financasinteligentes.com.br. Respondemos em até um
+                dia útil.
+              </p>
+            </div>
+            <a className="btn-primary w-full" href="mailto:suporte@financasinteligentes.com.br">
+              <CircleHelp className="h-4 w-4" />
+              Falar com o suporte
+            </a>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+          <DialogContent className="border-fin-border sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Configurações do perfil</DialogTitle>
+              <DialogDescription>Atualize como seu nome aparece no sistema.</DialogDescription>
+            </DialogHeader>
+            <label className="space-y-1.5">
+              <span className="text-[13px] font-medium">Nome</span>
+              <input
+                className="field"
+                value={profileName}
+                onChange={(event) => setProfileName(event.target.value)}
+              />
+            </label>
+            <label className="space-y-1.5">
+              <span className="text-[13px] font-medium">E-mail</span>
+              <input className="field bg-fin-surface" value={String(user?.email || '')} disabled />
+            </label>
+            <button className="btn-primary w-full" onClick={() => void saveProfile()}>
+              Salvar configurações
+            </button>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </TooltipProvider>
   )
 }
 
@@ -422,6 +542,9 @@ function Sidebar({
   user,
   overdue,
   nextSeven,
+  collapsed = false,
+  isMobile = false,
+  onToggleCollapse,
   onSupport,
   onManageUsers,
   onOpenSettings,
@@ -429,6 +552,9 @@ function Sidebar({
   user: import('pocketbase').RecordModel | null
   overdue: number
   nextSeven: number
+  collapsed?: boolean
+  isMobile?: boolean
+  onToggleCollapse?: () => void
   onSupport: () => void
   onManageUsers: () => void
   onOpenSettings: () => void
@@ -443,90 +569,238 @@ function Sidebar({
     .toUpperCase()
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto px-4 pb-8 pt-6 [scrollbar-width:thin] [scrollbar-color:#E5E7EB_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-fin-border">
-      <NavLink to="/" className="mb-6 flex shrink-0 items-center gap-3 px-2">
-        <span className="grid h-10 w-10 place-items-center rounded-xl bg-fin-text text-white shadow-sm">
-          <WalletCards className="h-5 w-5" />
-        </span>
-        <span className="max-w-[150px] text-[15px] font-bold leading-tight tracking-tight">
-          Finanças
-          <br />
-          Inteligentes
-        </span>
-      </NavLink>
-      <nav className="shrink-0 space-y-1">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.exact}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${isActive ? 'bg-[#EEEEF8] text-fin-primary' : 'text-fin-muted hover:bg-white hover:text-fin-text'}`
-            }
-          >
-            <item.icon className="h-[18px] w-[18px]" />
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
-      <div className="mx-2 my-5 h-px shrink-0 bg-fin-border" />
-      <div className="shrink-0">
-        <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[.12em] text-fin-muted">
-          Resumo
-        </p>
-        <NavLink
-          to="/contas?status=atrasadas"
-          className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm text-fin-muted hover:bg-white"
+    <div
+      className={`relative flex h-full flex-col overflow-y-auto overflow-x-hidden pb-4 pt-4 transition-all duration-300 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+        collapsed ? 'px-2 items-center' : 'px-3.5'
+      }`}
+    >
+      {/* Botão de Toggle para Recolher / Expandir Menu (Desktop) */}
+      {!isMobile && onToggleCollapse && (
+        <button
+          onClick={onToggleCollapse}
+          className="absolute -right-3 top-6 z-50 hidden h-6 w-6 place-items-center rounded-full border border-fin-border bg-white text-fin-muted shadow-md hover:bg-fin-surface hover:text-fin-primary transition lg:grid"
+          aria-label={collapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+          title={collapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
         >
-          <span>Atrasadas</span>
-          <span
-            className={`rounded-md px-2 py-0.5 text-xs font-bold ${overdue ? 'bg-red-50 text-fin-danger' : 'bg-white text-fin-muted'}`}
-          >
-            {overdue}
-          </span>
-        </NavLink>
+          {collapsed ? (
+            <ChevronRight className="h-3.5 w-3.5" />
+          ) : (
+            <ChevronLeft className="h-3.5 w-3.5" />
+          )}
+        </button>
+      )}
+
+      {/* Cabeçalho do Menu com Logo */}
+      <div
+        className={`mb-5 flex shrink-0 items-center ${collapsed ? 'justify-center w-full' : 'gap-3 px-1.5'}`}
+      >
         <NavLink
-          to="/contas?status=em_aberto"
-          className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm text-fin-muted hover:bg-white"
+          to="/"
+          className={`flex items-center gap-3 rounded-xl transition ${
+            collapsed ? 'p-1 hover:opacity-85' : 'hover:opacity-90'
+          }`}
+          title="Finanças Inteligentes"
         >
-          <span>A vencer (7 dias)</span>
-          <span className="rounded-md bg-white px-2 py-0.5 text-xs font-bold text-fin-primary">
-            {nextSeven}
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-fin-text text-white shadow-sm">
+            <WalletCards className="h-5 w-5" />
           </span>
+          {!collapsed && (
+            <span className="max-w-[140px] text-[14px] font-bold leading-tight tracking-tight text-fin-text">
+              Finanças
+              <br />
+              Inteligentes
+            </span>
+          )}
         </NavLink>
       </div>
-      {/* Card do Usuário Conectado */}
-      <div className="mt-auto shrink-0 pt-5 border-t border-fin-border">
-        <div className="mb-2 flex items-center gap-2.5 rounded-xl bg-white p-2.5 shadow-sm border border-fin-border/60">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-fin-text text-xs font-bold text-white">
-            {initials}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-fin-text">{name}</p>
-            <p className="truncate text-[11px] text-fin-muted">{email}</p>
+
+      {/* Itens de Navegação Principal */}
+      <nav className="w-full shrink-0 space-y-1">
+        {navItems.map((item) => {
+          const content = (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.exact}
+              className={({ isActive }) =>
+                `group relative flex items-center rounded-xl text-sm font-medium transition-all ${
+                  collapsed ? 'h-10 w-10 justify-center mx-auto' : 'gap-3 px-3 py-2.5'
+                } ${
+                  isActive
+                    ? 'bg-[#EEEEF8] text-fin-primary font-semibold shadow-xs'
+                    : 'text-fin-muted hover:bg-fin-surface hover:text-fin-text'
+                }`
+              }
+            >
+              <item.icon className="h-[18px] w-[18px] shrink-0" />
+              {!collapsed && <span className="truncate">{item.label}</span>}
+            </NavLink>
+          )
+
+          if (collapsed) {
+            return (
+              <Tooltip key={item.to}>
+                <TooltipTrigger asChild>{content}</TooltipTrigger>
+                <TooltipContent side="right" className="font-medium">
+                  {item.label}
+                </TooltipContent>
+              </Tooltip>
+            )
+          }
+
+          return content
+        })}
+      </nav>
+
+      {/* Divisor */}
+      <div
+        className={`my-4 h-px shrink-0 bg-fin-border/70 ${collapsed ? 'w-8 mx-auto' : 'mx-2'}`}
+      />
+
+      {/* Resumo de Contas */}
+      {collapsed ? (
+        <div className="space-y-1.5 w-full shrink-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <NavLink
+                to="/contas?status=atrasadas"
+                className="relative grid h-10 w-10 mx-auto place-items-center rounded-xl text-fin-muted hover:bg-fin-surface hover:text-fin-danger transition"
+              >
+                <Bell className="h-4 w-4" />
+                {overdue > 0 && (
+                  <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-fin-danger px-1 text-[9px] font-bold text-white">
+                    {overdue}
+                  </span>
+                )}
+              </NavLink>
+            </TooltipTrigger>
+            <TooltipContent side="right">{overdue} conta(s) atrasada(s)</TooltipContent>
+          </Tooltip>
+        </div>
+      ) : (
+        <div className="shrink-0 px-1">
+          <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[.12em] text-fin-muted/80">
+            Resumo
+          </p>
+          <div className="space-y-0.5">
+            <NavLink
+              to="/contas?status=atrasadas"
+              className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium text-fin-muted hover:bg-fin-surface transition"
+            >
+              <span>Atrasadas</span>
+              <span
+                className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${
+                  overdue
+                    ? 'bg-red-50 text-fin-danger border border-red-200'
+                    : 'bg-fin-surface text-fin-muted'
+                }`}
+              >
+                {overdue}
+              </span>
+            </NavLink>
+            <NavLink
+              to="/contas?status=em_aberto"
+              className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium text-fin-muted hover:bg-fin-surface transition"
+            >
+              <span>A vencer (7 dias)</span>
+              <span className="rounded-md bg-fin-surface px-1.5 py-0.5 text-[11px] font-bold text-fin-primary">
+                {nextSeven}
+              </span>
+            </NavLink>
           </div>
         </div>
-        <button
-          onClick={onManageUsers}
-          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-fin-primary hover:bg-white transition"
-        >
-          <Users className="h-4 w-4" />
-          Gerenciar usuários
-        </button>
-        <button
-          onClick={onOpenSettings}
-          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-fin-muted transition hover:bg-white hover:text-fin-text"
-        >
-          <Settings className="h-4 w-4" />
-          Configurações
-        </button>
-        <button
-          onClick={onSupport}
-          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-fin-muted transition hover:bg-white hover:text-fin-text"
-        >
-          <CircleHelp className="h-4 w-4" />
-          Ajuda & Suporte
-        </button>
+      )}
+
+      {/* Rodapé / Perfil */}
+      <div
+        className={`mt-auto shrink-0 pt-4 border-t border-fin-border/70 ${collapsed ? 'w-full' : ''}`}
+      >
+        {collapsed ? (
+          <div className="space-y-1.5 w-full">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onOpenSettings}
+                  className="grid h-10 w-10 mx-auto place-items-center rounded-xl text-fin-muted hover:bg-fin-surface hover:text-fin-text transition"
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Configurações</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onManageUsers}
+                  className="grid h-10 w-10 mx-auto place-items-center rounded-xl text-fin-muted hover:bg-fin-surface hover:text-fin-primary transition"
+                >
+                  <Users className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Gerenciar usuários</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onSupport}
+                  className="grid h-10 w-10 mx-auto place-items-center rounded-xl text-fin-muted hover:bg-fin-surface hover:text-fin-text transition"
+                >
+                  <CircleHelp className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Ajuda & Suporte</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="pt-2 flex justify-center">
+                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-fin-text text-xs font-bold text-white shadow-xs">
+                    {initials}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p className="font-semibold">{name}</p>
+                <p className="text-[11px] text-fin-muted">{email}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        ) : (
+          <>
+            <div className="mb-2 flex items-center gap-2.5 rounded-xl bg-fin-surface/60 p-2 border border-fin-border/60">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-fin-text text-xs font-bold text-white shadow-xs">
+                {initials}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold text-fin-text">{name}</p>
+                <p className="truncate text-[10px] text-fin-muted">{email}</p>
+              </div>
+            </div>
+            <button
+              onClick={onManageUsers}
+              className="flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-fin-primary hover:bg-fin-surface transition"
+            >
+              <Users className="h-3.5 w-3.5" />
+              Gerenciar usuários
+            </button>
+            <button
+              onClick={onOpenSettings}
+              className="flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-medium text-fin-muted transition hover:bg-fin-surface hover:text-fin-text"
+            >
+              <Settings className="h-3.5 w-3.5" />
+              Configurações
+            </button>
+            <button
+              onClick={onSupport}
+              className="flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-medium text-fin-muted transition hover:bg-fin-surface hover:text-fin-text"
+            >
+              <CircleHelp className="h-3.5 w-3.5" />
+              Ajuda & Suporte
+            </button>
+          </>
+        )}
       </div>
     </div>
   )

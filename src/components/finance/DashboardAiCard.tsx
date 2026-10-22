@@ -110,9 +110,9 @@ export function DashboardAiCard({
   const currentMonthPretty = monthTitle(currentMonthKey)
 
   return (
-    <article className="fin-card animate-fade-up stagger-1 relative overflow-hidden border border-fin-border/80 bg-gradient-to-br from-white via-white to-indigo-50/40 p-5 shadow-sm transition hover:shadow-md sm:p-6">
+    <article className="fin-card animate-fade-up stagger-1 relative overflow-hidden border border-fin-border/80 bg-gradient-to-br from-white via-white to-indigo-50/40 p-5 shadow-sm transition hover:shadow-md sm:p-6 dark:border-indigo-500/25 dark:bg-gradient-to-br dark:from-indigo-950/35 dark:via-[#111726] dark:to-[#0c121e]">
       {/* Detalhe estético sutil estilo Mercury */}
-      <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-indigo-200/20 to-purple-200/20 blur-2xl" />
+      <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-indigo-200/20 to-purple-200/20 blur-2xl dark:from-indigo-500/10 dark:to-purple-500/10" />
 
       <div className="relative flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         {/* Bloco esquerdo: título, badge e input */}
@@ -145,11 +145,11 @@ export function DashboardAiCard({
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder="Ex: Quanto gastei com Alimentação? Ou peça uma análise..."
-                className="field h-11 bg-white/90 pr-10 text-sm shadow-2xs focus:bg-white"
+                className="field h-11 bg-white/90 pr-10 text-sm shadow-2xs focus:bg-white dark:bg-[#131a29]/90 dark:border-white/10 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:bg-[#131a29]"
               />
               <button
                 type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-fin-muted transition hover:bg-fin-surface hover:text-fin-primary"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-fin-muted transition hover:bg-fin-surface hover:text-fin-primary dark:hover:bg-white/10 dark:hover:text-indigo-400"
                 title="Perguntar ao Assistente"
               >
                 <CornerDownLeft className="h-4 w-4" />
@@ -175,10 +175,10 @@ export function DashboardAiCard({
                   key={idx}
                   type="button"
                   onClick={() => handleAsk(s.prompt)}
-                  className="group inline-flex items-center gap-1.5 rounded-xl border border-fin-border/80 bg-white/90 px-3 py-1.5 text-xs text-fin-text shadow-2xs transition hover:border-fin-primary/40 hover:bg-indigo-50/50 hover:text-fin-primary"
+                  className="group inline-flex items-center gap-1.5 rounded-xl border border-fin-border/80 bg-white/90 px-3 py-1.5 text-xs text-fin-text shadow-2xs transition hover:border-fin-primary/40 hover:bg-indigo-50/50 hover:text-fin-primary dark:border-white/10 dark:bg-[#131a29]/90 dark:text-slate-200 dark:hover:border-indigo-400/40 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-300"
                   title={s.prompt}
                 >
-                  <Sparkles className="h-3 w-3 text-fin-primary shrink-0" />
+                  <Sparkles className="h-3 w-3 text-fin-primary dark:text-indigo-400 shrink-0" />
                   <span className="truncate max-w-[280px] sm:max-w-none">{s.label}</span>
                   <ArrowRight className="h-3 w-3 text-fin-muted opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
@@ -188,13 +188,15 @@ export function DashboardAiCard({
         </div>
 
         {/* Bloco direito: Teaser de Fechamento / Relatório Mensal de IA */}
-        <div className="w-full shrink-0 rounded-2xl border border-fin-border/70 bg-white p-4 shadow-2xs lg:w-80">
+        <div className="w-full shrink-0 rounded-2xl border border-fin-border/70 bg-white p-4 shadow-2xs lg:w-80 dark:border-white/10 dark:bg-[#131a29]/90">
           <div className="mb-2 flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-fin-muted">
-              <FileText className="h-3.5 w-3.5 text-fin-primary" />
+            <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-fin-muted dark:text-slate-400">
+              <FileText className="h-3.5 w-3.5 text-fin-primary dark:text-indigo-400" />
               Fechamento com IA
             </span>
-            <span className="text-[11px] font-medium text-fin-muted">{currentMonthPretty}</span>
+            <span className="text-[11px] font-medium text-fin-muted dark:text-slate-400">
+              {currentMonthPretty}
+            </span>
           </div>
 
           {loadingReport ? (
@@ -205,13 +207,13 @@ export function DashboardAiCard({
             </div>
           ) : aiReport && aiReport.summary ? (
             <div className="space-y-3">
-              <p className="line-clamp-3 text-xs leading-relaxed text-fin-muted">
+              <p className="line-clamp-3 text-xs leading-relaxed text-fin-muted dark:text-slate-300">
                 {aiReport.summary}
               </p>
               <button
                 type="button"
                 onClick={() => navigate(`/relatorios?month=${currentMonthKey}`)}
-                className="group flex w-full items-center justify-between rounded-xl bg-indigo-50/70 px-3 py-2 text-xs font-semibold text-fin-primary transition hover:bg-indigo-100/80"
+                className="group flex w-full items-center justify-between rounded-xl bg-indigo-50/70 px-3 py-2 text-xs font-semibold text-fin-primary transition hover:bg-indigo-100/80 dark:bg-indigo-950/50 dark:text-indigo-300 dark:hover:bg-indigo-900/60"
               >
                 <span>Ver fechamento completo</span>
                 <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -219,16 +221,16 @@ export function DashboardAiCard({
             </div>
           ) : (
             <div className="space-y-2.5">
-              <p className="text-xs leading-relaxed text-fin-muted">
+              <p className="text-xs leading-relaxed text-fin-muted dark:text-slate-300">
                 Feche o mês com Inteligência Artificial: balanço consolidado, detecção de padrões e
                 sugestões de corte.
               </p>
               <button
                 type="button"
                 onClick={() => navigate(`/relatorios?month=${currentMonthKey}`)}
-                className="btn-secondary flex w-full items-center justify-center gap-2 !py-2 !text-xs font-medium text-fin-primary"
+                className="btn-secondary flex w-full items-center justify-center gap-2 !py-2 !text-xs font-medium text-fin-primary dark:text-indigo-300 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
               >
-                <Sparkles className="h-3.5 w-3.5 text-fin-primary" />
+                <Sparkles className="h-3.5 w-3.5 text-fin-primary dark:text-indigo-400" />
                 Fechar mês com IA
               </button>
             </div>

@@ -267,40 +267,12 @@ function AppShell() {
             sidebarCollapsed ? 'w-[72px]' : 'w-64'
           } shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.09)]`}
         >
-          {/* Botão de Toggle para Recolher / Expandir Menu (Desktop)
-              Estilo da imagem de referência: entalhe em meio-círculo branco na borda direita da pílula
-              contendo apenas o chevron fino ">" em grafite escuro sem borda, sem fundo e sem sombra no botão em si. */}
-          <div
-            className={`absolute z-50 hidden lg:flex items-center justify-center transition-all duration-300 ease-in-out ${
-              sidebarCollapsed ? '-right-[11px] top-[74px]' : '-right-[11px] top-7'
-            }`}
-          >
-            {/* O entalhe em meia lua / círculo branco contínuo com o fundo da pílula */}
-            <div className="relative flex h-8 w-6 items-center justify-start rounded-r-full border-y border-r border-fin-border bg-white shadow-[2px_1px_4px_rgba(0,0,0,0.03)]">
-              {/* Máscara para conectar perfeitamente com o fundo branco da sidebar */}
-              <div className="absolute -left-1.5 top-0 bottom-0 w-2 bg-white" />
-
-              <button
-                type="button"
-                onClick={toggleSidebar}
-                className="relative z-10 -ml-1 grid h-7 w-7 place-items-center rounded-full bg-transparent text-[#2c3038] hover:text-[#111322] hover:bg-black/[0.04] active:scale-95 transition-all cursor-pointer focus:outline-none"
-                aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
-                title={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
-              >
-                {sidebarCollapsed ? (
-                  <ChevronRight className="h-4 w-4 stroke-[1.65]" />
-                ) : (
-                  <ChevronLeft className="h-4 w-4 stroke-[1.65]" />
-                )}
-              </button>
-            </div>
-          </div>
-
           <Sidebar
             user={user}
             overdue={overdue}
             nextSeven={nextSeven}
             collapsed={sidebarCollapsed}
+            onToggleCollapse={toggleSidebar}
             onNewTransaction={() => {
               setDefaultType('despesa')
               setTransactionOpen(true)
@@ -579,6 +551,7 @@ function Sidebar({
   overdue,
   nextSeven,
   collapsed = false,
+  onToggleCollapse,
   onNewTransaction,
   onSupport,
   onManageUsers,
@@ -588,6 +561,7 @@ function Sidebar({
   overdue: number
   nextSeven: number
   collapsed?: boolean
+  onToggleCollapse?: () => void
   onNewTransaction?: () => void
   onSupport: () => void
   onManageUsers: () => void
@@ -612,7 +586,7 @@ function Sidebar({
       {collapsed ? (
         <div className="flex h-full w-full flex-col items-center">
           {/* Topo: Logo oficial do sistema idêntico ao modo expandido (quadrado escuro com ícone branco) */}
-          <div className="mb-2 shrink-0">
+          <div className="shrink-0 flex flex-col items-center">
             <Tooltip>
               <TooltipTrigger asChild>
                 <NavLink
@@ -629,6 +603,25 @@ function Sidebar({
                 Finanças Inteligentes
               </TooltipContent>
             </Tooltip>
+
+            {/* Botão recolher/expandir abaixo do logotipo (modo recolhido) */}
+            {onToggleCollapse && (
+              <div className="mt-1 mb-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={onToggleCollapse}
+                      className="grid h-7 w-7 place-items-center rounded-lg bg-transparent text-[#2c3038] hover:text-[#111322] hover:bg-black/[0.04] active:scale-95 transition-all cursor-pointer focus:outline-none"
+                      aria-label="Expandir menu lateral"
+                    >
+                      <ChevronRight className="h-4 w-4 stroke-[1.65]" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Expandir menu lateral</TooltipContent>
+                </Tooltip>
+              </div>
+            )}
           </div>
 
           {/* Botão de ação: "+" em destaque */}
@@ -766,22 +759,43 @@ function Sidebar({
       ) : (
         /* ESTADO EXPANDIDO: Layout completo e detalhado */
         <>
-          {/* Cabeçalho do Menu com Logo */}
-          <div className="mb-5 flex shrink-0 items-center gap-3 px-1.5">
-            <NavLink
-              to="/"
-              className="flex items-center gap-3 rounded-xl transition hover:opacity-90"
-              title="Finanças Inteligentes"
-            >
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-fin-text text-white shadow-sm">
-                <WalletCards className="h-5 w-5" />
-              </span>
-              <span className="max-w-[140px] text-[14px] font-bold leading-tight tracking-tight text-fin-text">
-                Finanças
-                <br />
-                Inteligentes
-              </span>
-            </NavLink>
+          {/* Cabeçalho do Menu com Logo e Botão de Recolher abaixo do logotipo */}
+          <div className="mb-4 shrink-0 px-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <NavLink
+                to="/"
+                className="flex items-center gap-3 rounded-xl transition hover:opacity-90"
+                title="Finanças Inteligentes"
+              >
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-fin-text text-white shadow-sm">
+                  <WalletCards className="h-5 w-5" />
+                </span>
+                <span className="max-w-[140px] text-[14px] font-bold leading-tight tracking-tight text-fin-text">
+                  Finanças
+                  <br />
+                  Inteligentes
+                </span>
+              </NavLink>
+            </div>
+
+            {/* Botão recolher abaixo do logotipo (modo expandido) */}
+            {onToggleCollapse && (
+              <div className="mt-2 pl-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={onToggleCollapse}
+                      className="hidden lg:grid h-7 w-7 place-items-center rounded-lg bg-transparent text-[#2c3038] hover:text-[#111322] hover:bg-black/[0.04] active:scale-95 transition-all cursor-pointer focus:outline-none"
+                      aria-label="Recolher menu lateral"
+                    >
+                      <ChevronLeft className="h-4 w-4 stroke-[1.65]" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Recolher menu lateral</TooltipContent>
+                </Tooltip>
+              </div>
+            )}
           </div>
 
           {/* Botão de Novo Lançamento em destaque no modo expandido */}

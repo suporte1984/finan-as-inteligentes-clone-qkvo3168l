@@ -9,6 +9,7 @@ export interface StatKpiCardProps {
   subtitle?: string
   positiveGood?: boolean
   type?: 'income' | 'expense' | 'result' | 'neutral'
+  className?: string
 }
 
 export function StatKpiCard({
@@ -18,6 +19,7 @@ export function StatKpiCard({
   subtitle = 'vs. média dos 3 meses',
   positiveGood = true,
   type = 'neutral',
+  className,
 }: StatKpiCardProps) {
   const isPositiveResult = type === 'result' ? value >= 0 : true
   const effectiveType = type === 'result' ? (isPositiveResult ? 'income' : 'expense') : type
@@ -62,6 +64,7 @@ export function StatKpiCard({
       className={cn(
         'fin-card relative overflow-hidden p-4 sm:p-5 transition-shadow hover:shadow-md',
         styles.cardClass,
+        className,
       )}
     >
       <div className="flex items-center justify-between gap-2">

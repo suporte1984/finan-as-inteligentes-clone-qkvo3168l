@@ -299,43 +299,45 @@ export default function TransactionsPage() {
       <section className="space-y-3 animate-fade-up stagger-1">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {/* Card 1: Valor Total Geral (todos os lançamentos do usuário autenticado) */}
-          <article className="fin-card relative overflow-hidden p-4 sm:p-5 border-indigo-200/80 bg-gradient-to-br from-indigo-50/50 via-white to-white shadow-xs">
+          <article className="fin-card relative overflow-hidden p-4 sm:p-5 border-indigo-200/80 bg-gradient-to-br from-indigo-50/50 via-white to-white shadow-xs dark:bg-gradient-to-br dark:from-indigo-950/35 dark:via-[#111726] dark:to-[#0c121e] dark:border-indigo-500/25">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-900/80">
+              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-900/80 dark:text-indigo-200/90">
                 Valor Total Geral
               </span>
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-100 text-indigo-700">
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-400 dark:border dark:border-indigo-500/25">
                 <Wallet className="h-4 w-4" />
               </span>
             </div>
-            <p className="mt-3 text-2xl font-extrabold tracking-tight text-indigo-950 sm:text-[26px]">
+            <p className="mt-3 text-2xl font-extrabold tracking-tight text-indigo-950 sm:text-[26px] dark:text-indigo-100">
               {loading ? '—' : brl.format(generalTotals.balance)}
             </p>
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-1 text-[11px] text-fin-muted">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-1 text-[11px] text-fin-muted dark:text-slate-400">
               <span>
                 {generalTotals.count} lançamento{generalTotals.count === 1 ? '' : 's'} no total
               </span>
-              <span className="font-medium text-indigo-700">Geral do usuário</span>
+              <span className="font-medium text-indigo-700 dark:text-indigo-300">
+                Geral do usuário
+              </span>
             </div>
           </article>
 
           {/* Card 2: Receitas Filtradas */}
-          <article className="fin-card p-4 sm:p-5 border-emerald-200/80 bg-gradient-to-br from-emerald-50/40 via-white to-white shadow-xs">
+          <article className="fin-card p-4 sm:p-5 border-emerald-200/80 bg-gradient-to-br from-emerald-50/40 via-white to-white shadow-xs dark:bg-gradient-to-br dark:from-emerald-950/35 dark:via-[#111726] dark:to-[#0c121e] dark:border-emerald-500/25">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-900/80">
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-900/80 dark:text-emerald-200/90">
                 Receitas (filtradas)
               </span>
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-100 text-emerald-800">
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border dark:border-emerald-500/25">
                 <ArrowUpRight className="h-4 w-4" />
               </span>
             </div>
-            <p className="mt-3 text-2xl font-extrabold tracking-tight text-emerald-800 sm:text-[26px]">
+            <p className="mt-3 text-2xl font-extrabold tracking-tight text-emerald-800 sm:text-[26px] dark:text-emerald-300">
               {loading ? '—' : brl.format(filteredTotals.income)}
             </p>
-            <div className="mt-2 flex items-center justify-between text-[11px] text-fin-muted">
+            <div className="mt-2 flex items-center justify-between text-[11px] text-fin-muted dark:text-slate-400">
               <span>Entradas consideradas</span>
               {hasFilters && (
-                <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-300">
                   <Filter className="h-3 w-3" /> filtrado
                 </span>
               )}
@@ -343,22 +345,22 @@ export default function TransactionsPage() {
           </article>
 
           {/* Card 3: Despesas Filtradas */}
-          <article className="fin-card p-4 sm:p-5 border-rose-200/80 bg-gradient-to-br from-rose-50/40 via-white to-white shadow-xs">
+          <article className="fin-card p-4 sm:p-5 border-rose-200/80 bg-gradient-to-br from-rose-50/40 via-white to-white shadow-xs dark:bg-gradient-to-br dark:from-rose-950/35 dark:via-[#111726] dark:to-[#0c121e] dark:border-rose-500/25">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-rose-900/80">
+              <span className="text-xs font-semibold uppercase tracking-wider text-rose-900/80 dark:text-rose-200/90">
                 Despesas (filtradas)
               </span>
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-rose-100 text-rose-800">
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-400 dark:border dark:border-rose-500/25">
                 <ArrowDownRight className="h-4 w-4" />
               </span>
             </div>
-            <p className="mt-3 text-2xl font-extrabold tracking-tight text-rose-800 sm:text-[26px]">
+            <p className="mt-3 text-2xl font-extrabold tracking-tight text-rose-800 sm:text-[26px] dark:text-rose-300">
               {loading ? '—' : brl.format(filteredTotals.expense)}
             </p>
-            <div className="mt-2 flex items-center justify-between text-[11px] text-fin-muted">
+            <div className="mt-2 flex items-center justify-between text-[11px] text-fin-muted dark:text-slate-400">
               <span>Saídas consideradas</span>
               {hasFilters && (
-                <span className="inline-flex items-center gap-1 font-semibold text-rose-700">
+                <span className="inline-flex items-center gap-1 font-semibold text-rose-700 dark:text-rose-300">
                   <Filter className="h-3 w-3" /> filtrado
                 </span>
               )}
@@ -370,23 +372,33 @@ export default function TransactionsPage() {
             className={cn(
               'fin-card p-4 sm:p-5 shadow-xs transition-colors',
               filteredTotals.balance > 0 &&
-                'border-emerald-200/80 bg-gradient-to-br from-emerald-50/30 via-white to-white',
+                'border-emerald-200/80 bg-gradient-to-br from-emerald-50/30 via-white to-white dark:bg-gradient-to-br dark:from-emerald-950/35 dark:via-[#111726] dark:to-[#0c121e] dark:border-emerald-500/25',
               filteredTotals.balance < 0 &&
-                'border-rose-200/80 bg-gradient-to-br from-rose-50/30 via-white to-white',
+                'border-rose-200/80 bg-gradient-to-br from-rose-50/30 via-white to-white dark:bg-gradient-to-br dark:from-rose-950/35 dark:via-[#111726] dark:to-[#0c121e] dark:border-rose-500/25',
               filteredTotals.balance === 0 &&
-                'border-fin-border bg-gradient-to-br from-slate-50 via-white to-white',
+                'border-fin-border bg-gradient-to-br from-slate-50 via-white to-white dark:bg-gradient-to-br dark:from-indigo-950/35 dark:via-[#111726] dark:to-[#0c121e] dark:border-indigo-500/25',
             )}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-fin-text/80">
+              <span
+                className={cn(
+                  'text-xs font-semibold uppercase tracking-wider',
+                  filteredTotals.balance > 0 && 'text-emerald-900/80 dark:text-emerald-200/90',
+                  filteredTotals.balance < 0 && 'text-rose-900/80 dark:text-rose-200/90',
+                  filteredTotals.balance === 0 && 'text-fin-text/80 dark:text-indigo-200/90',
+                )}
+              >
                 Saldo (filtrado)
               </span>
               <span
                 className={cn(
                   'grid h-8 w-8 place-items-center rounded-lg',
-                  filteredTotals.balance > 0 && 'bg-emerald-100 text-emerald-800',
-                  filteredTotals.balance < 0 && 'bg-rose-100 text-rose-800',
-                  filteredTotals.balance === 0 && 'bg-slate-200 text-slate-700',
+                  filteredTotals.balance > 0 &&
+                    'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border dark:border-emerald-500/25',
+                  filteredTotals.balance < 0 &&
+                    'bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-400 dark:border dark:border-rose-500/25',
+                  filteredTotals.balance === 0 &&
+                    'bg-slate-200 text-slate-700 dark:bg-indigo-500/15 dark:text-indigo-400 dark:border dark:border-indigo-500/25',
                 )}
               >
                 <Scale className="h-4 w-4" />
@@ -395,18 +407,18 @@ export default function TransactionsPage() {
             <p
               className={cn(
                 'mt-3 text-2xl font-extrabold tracking-tight sm:text-[26px]',
-                filteredTotals.balance > 0 && 'text-emerald-800',
-                filteredTotals.balance < 0 && 'text-rose-800',
-                filteredTotals.balance === 0 && 'text-fin-text',
+                filteredTotals.balance > 0 && 'text-emerald-800 dark:text-emerald-300',
+                filteredTotals.balance < 0 && 'text-rose-800 dark:text-rose-300',
+                filteredTotals.balance === 0 && 'text-fin-text dark:text-indigo-100',
               )}
             >
               {loading
                 ? '—'
                 : `${filteredTotals.balance > 0 ? '+' : ''}${brl.format(filteredTotals.balance)}`}
             </p>
-            <div className="mt-2 flex items-center justify-between text-[11px] text-fin-muted">
+            <div className="mt-2 flex items-center justify-between text-[11px] text-fin-muted dark:text-slate-400">
               <span>Receitas − Despesas</span>
-              <span className="font-medium">
+              <span className="font-medium text-fin-text dark:text-slate-200">
                 {filteredTotals.count} {filteredTotals.count === 1 ? 'item' : 'itens'}
               </span>
             </div>

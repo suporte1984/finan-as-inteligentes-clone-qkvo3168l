@@ -40,6 +40,7 @@ import { exportTransactionsToCsv } from '@/lib/exportCsv'
 import { listTransactions } from '@/services/transactions'
 import type { AiReport, Transaction } from '@/types/finance'
 import { cn } from '@/lib/utils'
+import { StatKpiCard } from '@/components/finance/StatKpiCard'
 
 type ReportTab = 'geral' | 'comparativos'
 const colors = ['#4338CA', '#047857', '#D97706', '#BE123C', '#6D28D9', '#0E7490', '#C2410C']
@@ -318,7 +319,8 @@ export default function ReportsPage() {
       ) : (
         <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 animate-fade-up stagger-1">
-            <KpiCard
+            <StatKpiCard
+              className="print-card"
               title="Receitas do mês"
               value={selected.receitas}
               variation={incomeVariationVsAvg}
@@ -326,7 +328,8 @@ export default function ReportsPage() {
               positiveGood
               type="income"
             />
-            <KpiCard
+            <StatKpiCard
+              className="print-card"
               title="Despesas do mês"
               value={selected.despesas}
               variation={expenseVariationVsAvg}
@@ -334,7 +337,8 @@ export default function ReportsPage() {
               positiveGood={false}
               type="expense"
             />
-            <KpiCard
+            <StatKpiCard
+              className="print-card"
               title="Resultado"
               value={result}
               variation={resultVariationVsAvg}
@@ -342,7 +346,8 @@ export default function ReportsPage() {
               positiveGood
               type="result"
             />
-            <KpiCard
+            <StatKpiCard
+              className="print-card"
               title="Variação vs. média (3m)"
               value={Math.abs(result - prior3MonthsData.resultado)}
               variation={resultVariationVsAvg}
@@ -778,80 +783,6 @@ export default function ReportsPage() {
         </>
       )}
     </div>
-  )
-}
-
-function KpiCard({
-  title,
-  value,
-  variation,
-  subtitle = 'vs. média dos 3 meses',
-  positiveGood,
-  type = 'neutral',
-}: {
-  title: string
-  value: number
-  variation: number
-  subtitle?: string
-  positiveGood: boolean
-  type?: 'income' | 'expense' | 'result' | 'neutral'
-}) {
-  const visualPositive = variation >= 0 ? positiveGood : !positiveGood
-
-  const typeStyles = {
-    income: {
-      cardBg: 'bg-gradient-to-b from-emerald-50/70 to-white border-emerald-200/80 shadow-xs',
-      numColor: 'text-emerald-900',
-      labelColor: 'text-emerald-900/80 font-semibold',
-      accentDot: 'bg-emerald-600',
-    },
-    expense: {
-      cardBg: 'bg-gradient-to-b from-rose-50/70 to-white border-rose-200/80 shadow-xs',
-      numColor: 'text-rose-900',
-      labelColor: 'text-rose-900/80 font-semibold',
-      accentDot: 'bg-rose-600',
-    },
-    result: {
-      cardBg: 'bg-gradient-to-b from-indigo-50/70 to-white border-indigo-200/80 shadow-xs',
-      numColor: value >= 0 ? 'text-indigo-950' : 'text-rose-900',
-      labelColor: 'text-indigo-950/80 font-semibold',
-      accentDot: 'bg-indigo-600',
-    },
-    neutral: {
-      cardBg: 'bg-gradient-to-b from-slate-50/80 to-white border-fin-border shadow-xs',
-      numColor: 'text-fin-text',
-      labelColor: 'text-fin-text font-semibold',
-      accentDot: 'bg-fin-primary',
-    },
-  }[type]
-
-  return (
-    <article className="text-[#56b7c3] bg-[#119abd] inline-block border-hidden">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className={cn('h-2 w-2 rounded-full shrink-0', typeStyles.accentDot)} />
-          <p className="text-[#2f2f2f]">{title}</p>
-        </div>
-        <span
-          className={cn(
-            'flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold border shadow-2xs',
-            visualPositive
-              ? 'bg-emerald-100/80 text-emerald-900 border-emerald-300'
-              : 'bg-rose-100/80 text-rose-900 border-rose-300',
-          )}
-        >
-          {variation >= 0 ? (
-            <ArrowUpRight className="h-3 w-3 stroke-[2.5]" />
-          ) : (
-            <ArrowDownRight className="h-3 w-3 stroke-[2.5]" />
-          )}
-          {variation >= 0 ? '+' : ''}
-          {variation.toFixed(1)}%
-        </span>
-      </div>
-      <p className="text-[#262626]">{brl.format(value)}</p>
-      <p className="mt-1.5 text-[11px] font-medium text-fin-muted">{subtitle}</p>
-    </article>
   )
 }
 

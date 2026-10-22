@@ -652,8 +652,8 @@ function Sidebar({
                       className={({ isActive }) =>
                         `group relative grid h-11 w-11 place-items-center rounded-2xl transition-all duration-150 ${
                           isActive
-                            ? 'bg-fin-primary/10 text-fin-primary shadow-xs font-semibold ring-1 ring-fin-primary/25'
-                            : 'text-fin-muted hover:bg-fin-surface hover:text-fin-text'
+                            ? 'bg-fin-primary/10 text-fin-primary shadow-sm font-semibold border border-fin-primary/30'
+                            : 'border-0 border-transparent bg-white text-fin-muted shadow-sm hover:bg-fin-surface/80 hover:text-fin-text hover:shadow'
                         }`
                       }
                     >

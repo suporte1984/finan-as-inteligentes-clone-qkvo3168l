@@ -267,12 +267,31 @@ function AppShell() {
             sidebarCollapsed ? 'w-[72px]' : 'w-64'
           } shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_12px_36px_rgb(0,0,0,0.09)]`}
         >
+          {/* Botão de Toggle para Recolher / Expandir Menu (Desktop)
+              Posicionado no container <aside> com -right-3.5 para ficar perfeitamente centrado
+              na borda direita e nunca ser cortado pelo overflow interno do menu. */}
+          <button
+            onClick={toggleSidebar}
+            className="absolute -right-3.5 top-6 z-50 hidden h-7 w-7 place-items-center rounded-full border border-fin-border bg-white text-fin-muted shadow-md hover:border-fin-primary/40 hover:bg-fin-surface hover:text-fin-primary hover:scale-105 active:scale-95 transition-all lg:grid"
+            aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+            title={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </button>
+
           <Sidebar
             user={user}
             overdue={overdue}
             nextSeven={nextSeven}
             collapsed={sidebarCollapsed}
-            onToggleCollapse={toggleSidebar}
+            onNewTransaction={() => {
+              setDefaultType('despesa')
+              setTransactionOpen(true)
+            }}
             onSupport={() => setSupportOpen(true)}
             onManageUsers={() => navigate('/usuarios')}
             onOpenSettings={() => navigate('/configuracoes')}
@@ -300,7 +319,11 @@ function AppShell() {
                 overdue={overdue}
                 nextSeven={nextSeven}
                 collapsed={false}
-                isMobile
+                onNewTransaction={() => {
+                  setMenuOpen(false)
+                  setDefaultType('despesa')
+                  setTransactionOpen(true)
+                }}
                 onSupport={() => {
                   setMenuOpen(false)
                   setSupportOpen(true)
@@ -543,8 +566,7 @@ function Sidebar({
   overdue,
   nextSeven,
   collapsed = false,
-  isMobile = false,
-  onToggleCollapse,
+  onNewTransaction,
   onSupport,
   onManageUsers,
   onOpenSettings,
@@ -553,8 +575,7 @@ function Sidebar({
   overdue: number
   nextSeven: number
   collapsed?: boolean
-  isMobile?: boolean
-  onToggleCollapse?: () => void
+  onNewTransaction?: () => void
   onSupport: () => void
   onManageUsers: () => void
   onOpenSettings: () => void
@@ -570,160 +591,128 @@ function Sidebar({
 
   return (
     <div
-      className={`relative flex h-full flex-col overflow-y-auto overflow-x-hidden pb-4 pt-4 transition-all duration-300 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
-        collapsed ? 'px-2 items-center' : 'px-3.5'
+      className={`relative flex h-full flex-col overflow-y-auto overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+        collapsed ? 'items-center px-2 py-3.5' : 'px-3.5 pb-4 pt-4'
       }`}
     >
-      {/* Botão de Toggle para Recolher / Expandir Menu (Desktop) */}
-      {!isMobile && onToggleCollapse && (
-        <button
-          onClick={onToggleCollapse}
-          className="absolute -right-3 top-6 z-50 hidden h-6 w-6 place-items-center rounded-full border border-fin-border bg-white text-fin-muted shadow-md hover:bg-fin-surface hover:text-fin-primary transition lg:grid"
-          aria-label={collapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
-          title={collapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-3.5 w-3.5" />
-          ) : (
-            <ChevronLeft className="h-3.5 w-3.5" />
-          )}
-        </button>
-      )}
+      {/* ESTADO RECOLHIDO: Inspirado no design em pílula com ícones em rounded-squares e botão "+" destacado */}
+      {collapsed ? (
+        <div className="flex h-full w-full flex-col items-center">
+          {/* Topo: Logo compacto com tooltip */}
+          <div className="mb-2 shrink-0 pt-0.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <NavLink
+                  to="/"
+                  className="grid h-11 w-11 place-items-center rounded-2xl bg-fin-text text-white shadow-sm transition hover:opacity-90"
+                  aria-label="Finanças Inteligentes - Início"
+                >
+                  <WalletCards className="h-5 w-5" />
+                </NavLink>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="font-semibold">
+                Finanças Inteligentes
+              </TooltipContent>
+            </Tooltip>
+          </div>
 
-      {/* Cabeçalho do Menu com Logo */}
-      <div
-        className={`mb-5 flex shrink-0 items-center ${collapsed ? 'justify-center w-full' : 'gap-3 px-1.5'}`}
-      >
-        <NavLink
-          to="/"
-          className={`flex items-center gap-3 rounded-xl transition ${
-            collapsed ? 'p-1 hover:opacity-85' : 'hover:opacity-90'
-          }`}
-          title="Finanças Inteligentes"
-        >
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-fin-text text-white shadow-sm">
-            <WalletCards className="h-5 w-5" />
-          </span>
-          {!collapsed && (
-            <span className="max-w-[140px] text-[14px] font-bold leading-tight tracking-tight text-fin-text">
-              Finanças
-              <br />
-              Inteligentes
-            </span>
-          )}
-        </NavLink>
-      </div>
-
-      {/* Itens de Navegação Principal */}
-      <nav className="w-full shrink-0 space-y-1">
-        {navItems.map((item) => {
-          const content = (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.exact}
-              className={({ isActive }) =>
-                `group relative flex items-center rounded-xl text-sm font-medium transition-all ${
-                  collapsed ? 'h-10 w-10 justify-center mx-auto' : 'gap-3 px-3 py-2.5'
-                } ${
-                  isActive
-                    ? 'bg-[#EEEEF8] text-fin-primary font-semibold shadow-xs'
-                    : 'text-fin-muted hover:bg-fin-surface hover:text-fin-text'
-                }`
-              }
-            >
-              <item.icon className="h-[18px] w-[18px] shrink-0" />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </NavLink>
-          )
-
-          if (collapsed) {
-            return (
-              <Tooltip key={item.to}>
-                <TooltipTrigger asChild>{content}</TooltipTrigger>
-                <TooltipContent side="right" className="font-medium">
-                  {item.label}
+          {/* Botão principal de ação: "+" em quadrado arredondado destacado (estilo pílula F1) */}
+          {onNewTransaction && (
+            <div className="mb-3 shrink-0">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onNewTransaction}
+                    className="group grid h-11 w-11 place-items-center rounded-2xl bg-fin-primary text-white shadow-[0_4px_14px_rgba(79,70,229,0.35)] transition-all duration-200 hover:scale-[1.05] hover:bg-[#4338ca] hover:shadow-[0_6px_18px_rgba(79,70,229,0.45)] active:scale-95"
+                    aria-label="Novo lançamento"
+                  >
+                    <Plus className="h-5 w-5 stroke-[2.4] transition-transform duration-200 group-hover:rotate-90" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="font-semibold">
+                  Novo lançamento
                 </TooltipContent>
               </Tooltip>
-            )
-          }
+            </div>
+          )}
 
-          return content
-        })}
-      </nav>
+          {/* Divisor sutil */}
+          <div className="mb-3 h-px w-8 shrink-0 bg-fin-border/70" />
 
-      {/* Divisor */}
-      <div
-        className={`my-4 h-px shrink-0 bg-fin-border/70 ${collapsed ? 'w-8 mx-auto' : 'mx-2'}`}
-      />
+          {/* Coluna de navegação em rounded-squares centrados e bem espaçados */}
+          <nav className="flex w-full flex-1 flex-col items-center gap-2 py-0.5">
+            {navItems.map((item) => {
+              const isContas = item.to === '/contas'
+              return (
+                <Tooltip key={item.to}>
+                  <TooltipTrigger asChild>
+                    <NavLink
+                      to={item.to}
+                      end={item.exact}
+                      className={({ isActive }) =>
+                        `group relative grid h-11 w-11 place-items-center rounded-2xl transition-all duration-150 ${
+                          isActive
+                            ? 'bg-fin-primary/10 text-fin-primary shadow-xs font-semibold ring-1 ring-fin-primary/25'
+                            : 'text-fin-muted hover:bg-fin-surface hover:text-fin-text'
+                        }`
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <item.icon
+                            className={`h-5 w-5 shrink-0 transition-transform group-hover:scale-105 ${
+                              isActive ? 'stroke-[2.2]' : 'stroke-[1.8]'
+                            }`}
+                          />
+                          {/* Badge de contas em atraso no ícone de Contas */}
+                          {isContas && overdue > 0 && (
+                            <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-fin-danger px-1 text-[9px] font-bold text-white shadow-xs ring-2 ring-white">
+                              {overdue}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="font-medium">
+                    {item.label}
+                    {isContas && overdue > 0 && ` (${overdue} atrasada${overdue > 1 ? 's' : ''})`}
+                  </TooltipContent>
+                </Tooltip>
+              )
+            })}
+          </nav>
 
-      {/* Resumo de Contas */}
-      {collapsed ? (
-        <div className="space-y-1.5 w-full shrink-0">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <NavLink
-                to="/contas?status=atrasadas"
-                className="relative grid h-10 w-10 mx-auto place-items-center rounded-xl text-fin-muted hover:bg-fin-surface hover:text-fin-danger transition"
-              >
-                <Bell className="h-4 w-4" />
-                {overdue > 0 && (
-                  <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-fin-danger px-1 text-[9px] font-bold text-white">
-                    {overdue}
-                  </span>
-                )}
-              </NavLink>
-            </TooltipTrigger>
-            <TooltipContent side="right">{overdue} conta(s) atrasada(s)</TooltipContent>
-          </Tooltip>
-        </div>
-      ) : (
-        <div className="shrink-0 px-1">
-          <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[.12em] text-fin-muted/80">
-            Resumo
-          </p>
-          <div className="space-y-0.5">
-            <NavLink
-              to="/contas?status=atrasadas"
-              className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium text-fin-muted hover:bg-fin-surface transition"
-            >
-              <span>Atrasadas</span>
-              <span
-                className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${
-                  overdue
-                    ? 'bg-red-50 text-fin-danger border border-red-200'
-                    : 'bg-fin-surface text-fin-muted'
-                }`}
-              >
-                {overdue}
-              </span>
-            </NavLink>
-            <NavLink
-              to="/contas?status=em_aberto"
-              className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium text-fin-muted hover:bg-fin-surface transition"
-            >
-              <span>A vencer (7 dias)</span>
-              <span className="rounded-md bg-fin-surface px-1.5 py-0.5 text-[11px] font-bold text-fin-primary">
-                {nextSeven}
-              </span>
-            </NavLink>
-          </div>
-        </div>
-      )}
+          {/* Rodapé compacto: Notificações/Contas, Configurações, Suporte e Avatar */}
+          <div className="mt-auto flex w-full shrink-0 flex-col items-center gap-2 border-t border-fin-border/70 pt-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <NavLink
+                  to="/contas?status=atrasadas"
+                  className="relative grid h-10 w-10 place-items-center rounded-xl text-fin-muted transition hover:bg-fin-surface hover:text-fin-danger"
+                  aria-label="Contas em atraso"
+                >
+                  <Bell className="h-4 w-4 stroke-[1.8]" />
+                  {overdue > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-fin-danger px-1 text-[9px] font-bold text-white shadow-xs ring-2 ring-white">
+                      {overdue}
+                    </span>
+                  )}
+                </NavLink>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                {overdue > 0 ? `${overdue} conta(s) em atraso` : 'Notificações de contas'}
+              </TooltipContent>
+            </Tooltip>
 
-      {/* Rodapé / Perfil */}
-      <div
-        className={`mt-auto shrink-0 pt-4 border-t border-fin-border/70 ${collapsed ? 'w-full' : ''}`}
-      >
-        {collapsed ? (
-          <div className="space-y-1.5 w-full">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={onOpenSettings}
-                  className="grid h-10 w-10 mx-auto place-items-center rounded-xl text-fin-muted hover:bg-fin-surface hover:text-fin-text transition"
+                  className="grid h-10 w-10 place-items-center rounded-xl text-fin-muted transition hover:bg-fin-surface hover:text-fin-text"
+                  aria-label="Configurações"
                 >
-                  <Settings className="h-4 w-4" />
+                  <Settings className="h-4 w-4 stroke-[1.8]" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">Configurações</TooltipContent>
@@ -732,22 +721,11 @@ function Sidebar({
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={onManageUsers}
-                  className="grid h-10 w-10 mx-auto place-items-center rounded-xl text-fin-muted hover:bg-fin-surface hover:text-fin-primary transition"
-                >
-                  <Users className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Gerenciar usuários</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
                   onClick={onSupport}
-                  className="grid h-10 w-10 mx-auto place-items-center rounded-xl text-fin-muted hover:bg-fin-surface hover:text-fin-text transition"
+                  className="grid h-10 w-10 place-items-center rounded-xl text-fin-muted transition hover:bg-fin-surface hover:text-fin-text"
+                  aria-label="Ajuda & Suporte"
                 >
-                  <CircleHelp className="h-4 w-4" />
+                  <CircleHelp className="h-4 w-4 stroke-[1.8]" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">Ajuda & Suporte</TooltipContent>
@@ -755,8 +733,8 @@ function Sidebar({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="pt-2 flex justify-center">
-                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-fin-text text-xs font-bold text-white shadow-xs">
+                <div className="pt-1">
+                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-fin-text text-xs font-bold text-white shadow-xs cursor-default">
                     {initials}
                   </span>
                 </div>
@@ -767,8 +745,102 @@ function Sidebar({
               </TooltipContent>
             </Tooltip>
           </div>
-        ) : (
-          <>
+        </div>
+      ) : (
+        /* ESTADO EXPANDIDO: Layout completo e detalhado */
+        <>
+          {/* Cabeçalho do Menu com Logo */}
+          <div className="mb-5 flex shrink-0 items-center gap-3 px-1.5">
+            <NavLink
+              to="/"
+              className="flex items-center gap-3 rounded-xl transition hover:opacity-90"
+              title="Finanças Inteligentes"
+            >
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-fin-text text-white shadow-sm">
+                <WalletCards className="h-5 w-5" />
+              </span>
+              <span className="max-w-[140px] text-[14px] font-bold leading-tight tracking-tight text-fin-text">
+                Finanças
+                <br />
+                Inteligentes
+              </span>
+            </NavLink>
+          </div>
+
+          {/* Botão de Novo Lançamento em destaque no modo expandido */}
+          {onNewTransaction && (
+            <div className="mb-4 shrink-0 px-0.5">
+              <button onClick={onNewTransaction} className="btn-primary w-full shadow-xs">
+                <Plus className="h-4 w-4 stroke-[2.2]" />
+                <span>Novo lançamento</span>
+              </button>
+            </div>
+          )}
+
+          {/* Itens de Navegação Principal */}
+          <nav className="w-full shrink-0 space-y-1">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.exact}
+                className={({ isActive }) =>
+                  `group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                    isActive
+                      ? 'bg-fin-primary/10 text-fin-primary font-semibold shadow-xs ring-1 ring-fin-primary/20'
+                      : 'text-fin-muted hover:bg-fin-surface hover:text-fin-text'
+                  }`
+                }
+              >
+                <item.icon className="h-[18px] w-[18px] shrink-0" />
+                <span className="truncate">{item.label}</span>
+                {item.to === '/contas' && overdue > 0 && (
+                  <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-fin-danger px-1.5 text-[10px] font-bold text-white">
+                    {overdue}
+                  </span>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* Divisor */}
+          <div className="my-4 h-px shrink-0 bg-fin-border/70 mx-2" />
+
+          {/* Resumo de Contas */}
+          <div className="shrink-0 px-1">
+            <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-[.12em] text-fin-muted/80">
+              Resumo
+            </p>
+            <div className="space-y-0.5">
+              <NavLink
+                to="/contas?status=atrasadas"
+                className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium text-fin-muted hover:bg-fin-surface transition"
+              >
+                <span>Atrasadas</span>
+                <span
+                  className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold ${
+                    overdue
+                      ? 'bg-red-50 text-fin-danger border border-red-200'
+                      : 'bg-fin-surface text-fin-muted'
+                  }`}
+                >
+                  {overdue}
+                </span>
+              </NavLink>
+              <NavLink
+                to="/contas?status=em_aberto"
+                className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium text-fin-muted hover:bg-fin-surface transition"
+              >
+                <span>A vencer (7 dias)</span>
+                <span className="rounded-md bg-fin-surface px-1.5 py-0.5 text-[11px] font-bold text-fin-primary">
+                  {nextSeven}
+                </span>
+              </NavLink>
+            </div>
+          </div>
+
+          {/* Rodapé / Perfil */}
+          <div className="mt-auto shrink-0 pt-4 border-t border-fin-border/70">
             <div className="mb-2 flex items-center gap-2.5 rounded-xl bg-fin-surface/60 p-2 border border-fin-border/60">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-fin-text text-xs font-bold text-white shadow-xs">
                 {initials}
@@ -799,9 +871,9 @@ function Sidebar({
               <CircleHelp className="h-3.5 w-3.5" />
               Ajuda & Suporte
             </button>
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

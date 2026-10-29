@@ -75,6 +75,8 @@ export default function Index() {
   const [loadingReport, setLoadingReport] = useState(true)
   const [loading, setLoading] = useState(true)
   const [accountModal, setAccountModal] = useState(false)
+  const [accountModalDefaultType, setAccountModalDefaultType] = useState<Account['type']>('banco')
+  const [editingAccount, setEditingAccount] = useState<Account | null>(null)
   const [billModal, setBillModal] = useState(false)
   const [billDirection, setBillDirection] = useState<BillDirection>('pagar')
   const [settling, setSettling] = useState<Bill | null>(null)
@@ -442,33 +444,72 @@ export default function Index() {
         </article>
         <article className="fin-card animate-fade-up stagger-2 p-6">
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="section-title">Contas</h2>
-            <button
-              onClick={() => setAccountModal(true)}
-              className="grid h-9 w-9 place-items-center rounded-full bg-fin-surface text-fin-muted transition hover:text-fin-primary"
-              aria-label="Adicionar conta"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
+            <div>
+              <h2 className="section-title">Contas</h2>
+              <p className="mt-0.5 text-xs text-fin-muted">Bancos, carteiras e cartões</p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingAccount(null)
+                  setAccountModalDefaultType('cartao')
+                  setAccountModal(true)
+                }}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-fin-border bg-fin-surface/70 px-2.5 py-1.5 text-xs font-semibold text-fin-text transition hover:border-fin-primary/40 hover:bg-fin-surface hover:text-fin-primary"
+                title="Adicionar novo cartão de crédito"
+              >
+                <CreditCard className="h-3.5 w-3.5 text-rose-500" />
+                <span>+ Cartão</span>
+              </button>
+              <button
+                onClick={() => {
+                  setEditingAccount(null)
+                  setAccountModalDefaultType('banco')
+                  setAccountModal(true)
+                }}
+                className="grid h-8 w-8 place-items-center rounded-full bg-fin-surface text-fin-muted transition hover:text-fin-primary"
+                aria-label="Adicionar conta"
+                title="Adicionar conta"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
           </div>
           <div className="space-y-1">
             {accountBalances.slice(0, showAllAccounts ? undefined : 4).map((account) => (
-              <AccountRow key={account.id} account={account} />
+              <AccountRow
+                key={account.id}
+                account={account}
+                onClick={() => {
+                  setEditingAccount(account)
+                  setAccountModal(true)
+                }}
+              />
             ))}
             {accountBalances.length === 0 && (
               <EmptyState icon={Landmark} text="Adicione sua primeira conta financeira." />
             )}
           </div>
           {accountBalances.length > 4 && (
-            <button
-              onClick={() => setShowAllAccounts((value) => !value)}
-              className="mt-4 flex items-center gap-2 text-sm font-semibold text-fin-primary"
-            >
-              <span className="grid h-7 w-7 place-items-center rounded-full bg-indigo-50">
-                +{accountBalances.length - 4}
-              </span>
-              {showAllAccounts ? 'Mostrar menos' : 'Ver todas'}
-            </button>
+            <div className="mt-4 flex items-center justify-between">
+              <button
+                onClick={() => setShowAllAccounts((value) => !value)}
+                className="flex items-center gap-2 text-sm font-semibold text-fin-primary"
+              >
+                <span className="grid h-7 w-7 place-items-center rounded-full bg-indigo-50">
+                  +{accountBalances.length - 4}
+                </span>
+                {showAllAccounts ? 'Mostrar menos' : 'Ver todas'}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/configuracoes')}
+                className="text-xs font-medium text-fin-muted hover:text-fin-primary hover:underline"
+              >
+                Gerenciar em Configurações
+              </button>
+            </div>
           )}
         </article>
       </section>
@@ -855,12 +896,17 @@ export default function Index() {
       </article>
 
       <AccountModal
+        account={editingAccount}
+        defaultType={accountModalDefaultType}
         open={accountModal}
-        onOpenChange={setAccountModal}
-        onSaved={() =>
+        onOpenChange={(open) => {
+          setAccountModal(open)
+          if (!open) setEditingAccount(null)
+        }}
+        onSaved={(acc) =>
           toast({
-            title: 'Conta adicionada',
-            description: 'Ela já faz parte do seu saldo consolidado.',
+            title: editingAccount ? 'Conta atualizada' : 'Conta adicionada',
+            description: `"${acc.name}" agora faz parte do seu saldo consolidado.`,
           })
         }
       />
@@ -893,19 +939,47 @@ export default function Index() {
   )
 }
 
-function AccountRow({ account }: { account: Account & { balance: number } }) {
+function AccountRow({
+  account,
+  onClick,
+}: {
+  account: Account & { balance: number }
+  onClick?: () => void
+}) {
   const Icon =
     account.type === 'cartao' ? CreditCard : account.type === 'carteira' ? WalletCards : Landmark
   return (
-    <div className="flex items-center gap-3 rounded-xl px-1 py-3 transition hover:bg-fin-surface">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick?.()
+        }
+      }}
+      className="group flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-fin-surface active:scale-[0.99] focus:outline-hidden focus:ring-2 focus:ring-fin-primary/30"
+      title="Clique para editar esta conta"
+    >
       <span
-        className="grid h-10 w-10 place-items-center rounded-full"
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-full transition group-hover:scale-105"
         style={{ background: `${account.color}16`, color: account.color }}
       >
         <Icon className="h-4 w-4" />
       </span>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">{account.name}</span>
-      <strong className="text-sm font-semibold">{brl.format(account.balance)}</strong>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <span className="truncate text-sm font-medium text-fin-text group-hover:text-fin-primary transition-colors">
+            {account.name}
+          </span>
+          <span className="rounded-full bg-fin-surface px-1.5 py-0.2 text-[10px] font-semibold text-fin-muted capitalize">
+            {account.type}
+          </span>
+        </div>
+        <p className="text-[11px] text-fin-muted">Clique para editar</p>
+      </div>
+      <strong className="text-sm font-semibold shrink-0">{brl.format(account.balance)}</strong>
     </div>
   )
 }

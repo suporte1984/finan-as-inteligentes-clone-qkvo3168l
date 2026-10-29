@@ -34,8 +34,12 @@ import { useToast } from '@/hooks/use-toast'
 import { getUserSettings, updateUserSettings } from '@/services/settings'
 import { sendBillsDueReminders } from '@/services/bills'
 import { listEmailNotifications } from '@/services/emailNotifications'
+import { CreditCard, Landmark, Pencil, Plus, WalletCards } from 'lucide-react'
+import { AccountModal } from '@/components/finance/AccountModal'
 import { TourModal } from '@/components/finance/TourModal'
-import type { EmailNotification, UserSettings } from '@/types/finance'
+import { useFinance } from '@/contexts/FinanceContext'
+import { brl } from '@/lib/format'
+import type { Account, AccountType, EmailNotification, UserSettings } from '@/types/finance'
 
 const DUE_DAYS_OPTIONS = [
   {
@@ -88,6 +92,12 @@ export default function SettingsPage() {
 
   // Controle de exibição do Tour Guiado (Modo Demonstração)
   const [tourOpen, setTourOpen] = useState(false)
+
+  // Gestão de Contas e Cartões
+  const { accounts, refreshAccounts } = useFinance()
+  const [accountModalOpen, setAccountModalOpen] = useState(false)
+  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null)
+  const [defaultAccountType, setDefaultAccountType] = useState<AccountType>('banco')
 
   const copyToClipboard = (text: string, key: string) => {
     void navigator.clipboard.writeText(text)
@@ -383,6 +393,158 @@ export default function SettingsPage() {
                   </div>
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* SEÇÃO CONTAS E CARTÕES */}
+          <div className="fin-card p-6 sm:p-7">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-start gap-3.5">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-indigo-500/10 text-fin-primary">
+                  <CreditCard className="h-5 w-5" />
+                </span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-semibold text-fin-text sm:text-lg">
+                      Contas e Cartões
+                    </h2>
+                    <span className="inline-flex items-center rounded-full bg-fin-surface px-2 py-0.5 text-[11px] font-semibold text-fin-muted border border-fin-border">
+                      {accounts.length} {accounts.length === 1 ? 'cadastrada' : 'cadastradas'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-fin-muted mt-0.5">
+                    Gerencie suas contas correntes, carteiras e adicione quantos cartões de crédito
+                    precisar.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedAccount(null)
+                    setDefaultAccountType('cartao')
+                    setAccountModalOpen(true)
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-fin-border bg-[var(--fin-bg-card)] px-3.5 py-2 text-xs font-semibold text-fin-text transition hover:border-rose-400/50 hover:bg-rose-500/10 hover:text-rose-500"
+                >
+                  <CreditCard className="h-3.5 w-3.5 text-rose-500" />+ Adicionar cartão
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedAccount(null)
+                    setDefaultAccountType('banco')
+                    setAccountModalOpen(true)
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-fin-primary px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-fin-primary/90 transition"
+                >
+                  <Plus className="h-4 w-4" />
+                  Adicionar conta
+                </button>
+              </div>
+            </div>
+
+            {/* Listagem de contas e cartões */}
+            <div className="mt-6 border-t border-fin-border pt-5">
+              {accounts.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-fin-border p-8 text-center">
+                  <Landmark className="mx-auto h-8 w-8 text-fin-muted mb-2 opacity-60" />
+                  <p className="text-sm font-medium text-fin-text">Nenhuma conta cadastrada</p>
+                  <p className="text-xs text-fin-muted mt-1">
+                    Crie sua conta bancária, carteira ou cartão de crédito para consolidar seus
+                    lançamentos.
+                  </p>
+                  <div className="mt-4 flex justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedAccount(null)
+                        setDefaultAccountType('cartao')
+                        setAccountModalOpen(true)
+                      }}
+                      className="btn-secondary !min-h-[34px] !py-1.5 !text-xs"
+                    >
+                      <CreditCard className="h-3.5 w-3.5" />
+                      Criar cartão
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedAccount(null)
+                        setDefaultAccountType('banco')
+                        setAccountModalOpen(true)
+                      }}
+                      className="btn-primary !min-h-[34px] !py-1.5 !text-xs"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Criar conta
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {accounts.map((acc) => {
+                    const Icon =
+                      acc.type === 'cartao'
+                        ? CreditCard
+                        : acc.type === 'carteira'
+                          ? WalletCards
+                          : Landmark
+                    const typeLabel =
+                      acc.type === 'cartao'
+                        ? 'Cartão de crédito'
+                        : acc.type === 'carteira'
+                          ? 'Carteira física'
+                          : 'Conta bancária'
+
+                    return (
+                      <div
+                        key={acc.id}
+                        className="group relative flex flex-col justify-between rounded-2xl border border-fin-border bg-fin-surface/40 p-4 transition-all hover:border-fin-primary/40 hover:bg-[var(--fin-bg-card)] hover:shadow-xs"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span
+                              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl"
+                              style={{ background: `${acc.color}18`, color: acc.color }}
+                            >
+                              <Icon className="h-5 w-5" />
+                            </span>
+                            <div className="min-w-0">
+                              <h3 className="truncate text-sm font-semibold text-fin-text group-hover:text-fin-primary transition-colors">
+                                {acc.name}
+                              </h3>
+                              <p className="text-xs text-fin-muted">{typeLabel}</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedAccount(acc)
+                              setDefaultAccountType(acc.type)
+                              setAccountModalOpen(true)
+                            }}
+                            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-transparent text-fin-muted transition hover:border-fin-border hover:bg-fin-surface hover:text-fin-text"
+                            title="Editar esta conta"
+                            aria-label={`Editar ${acc.name}`}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between border-t border-fin-border/60 pt-3 text-xs">
+                          <span className="text-fin-muted">Saldo inicial</span>
+                          <span className="font-semibold text-fin-text">
+                            {brl.format(acc.initial_balance)}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1122,6 +1284,24 @@ export default function SettingsPage() {
 
       {/* Modal do Tour Guiado */}
       <TourModal open={tourOpen} onOpenChange={setTourOpen} />
+
+      {/* Modal de Contas e Cartões */}
+      <AccountModal
+        account={selectedAccount}
+        defaultType={defaultAccountType}
+        open={accountModalOpen}
+        onOpenChange={(open) => {
+          setAccountModalOpen(open)
+          if (!open) setSelectedAccount(null)
+        }}
+        onSaved={async (saved) => {
+          await refreshAccounts()
+          toast({
+            title: selectedAccount ? 'Conta atualizada' : 'Conta criada com sucesso',
+            description: `"${saved.name}" já está ativa em suas finanças.`,
+          })
+        }}
+      />
     </div>
   )
 }

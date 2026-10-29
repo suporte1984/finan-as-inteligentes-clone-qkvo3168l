@@ -17,11 +17,13 @@ const colors = ['#5B5FEF', '#34C759', '#FFB020', '#F4526B', '#8B5CF6', '#06B6D4'
 
 export function AccountModal({
   account,
+  defaultType = 'banco',
   open,
   onOpenChange,
   onSaved,
 }: {
   account?: Account | null
+  defaultType?: AccountType
   open: boolean
   onOpenChange: (value: boolean) => void
   onSaved?: (account: Account) => void
@@ -29,7 +31,7 @@ export function AccountModal({
   const { refreshAccounts } = useFinance()
   const [form, setForm] = useState<AccountInput>({
     name: '',
-    type: 'banco',
+    type: defaultType,
     initial_balance: 0,
     color: colors[0],
   })
@@ -46,10 +48,16 @@ export function AccountModal({
               initial_balance: account.initial_balance,
               color: account.color,
             }
-          : { name: '', type: 'banco', initial_balance: 0, color: colors[0] },
+          : {
+              name: '',
+              type: defaultType,
+              initial_balance: 0,
+              // Escolhe cor padrão temática para cartão se for o caso
+              color: defaultType === 'cartao' ? '#F4526B' : colors[0],
+            },
       )
     }
-  }, [open, account])
+  }, [open, account, defaultType])
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (!form.name.trim()) return setMessage('Informe o nome da conta.')

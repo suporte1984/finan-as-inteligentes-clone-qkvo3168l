@@ -647,7 +647,7 @@ export default function SettingsPage() {
                     <span className="font-medium text-fin-text">
                       Destinatário ativo nos disparos:
                     </span>
-                    <span className="inline-flex items-center rounded-md bg-white px-2 py-1 font-mono text-[12px] font-semibold text-fin-primary border border-fin-border">
+                    <span className="inline-flex items-center rounded-md bg-[var(--fin-bg-card)] px-2 py-1 font-mono text-[12px] font-semibold text-fin-primary border border-fin-border">
                       {effectiveRecipient}
                     </span>
                   </div>
@@ -777,15 +777,15 @@ export default function SettingsPage() {
                         onClick={() => setBillsReminderDays(opt.days)}
                         className={`flex items-start gap-3 rounded-xl border p-3.5 text-left transition ${
                           isSelected
-                            ? 'border-fin-primary bg-[#F4F4FD] shadow-sm'
-                            : 'border-fin-border bg-white hover:border-fin-primary/40'
+                            ? 'border-fin-primary bg-indigo-500/10 shadow-sm'
+                            : 'border-fin-border bg-[var(--fin-bg-card)] hover:border-fin-primary/40'
                         }`}
                       >
                         <div
                           className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border transition ${
                             isSelected
                               ? 'border-fin-primary bg-fin-primary text-white'
-                              : 'border-fin-border bg-white'
+                              : 'border-fin-border bg-[var(--fin-bg-card)]'
                           }`}
                         >
                           {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
@@ -823,7 +823,7 @@ export default function SettingsPage() {
                   type="button"
                   onClick={() => void handleTestReminders()}
                   disabled={testingEmail}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-fin-border bg-white px-3.5 py-2 text-xs font-medium text-fin-text transition hover:bg-fin-surface hover:text-fin-primary disabled:opacity-50 text-[#020202]"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-fin-border bg-[var(--fin-bg-card)] px-3.5 py-2 text-xs font-medium text-fin-text transition hover:bg-fin-surface hover:text-fin-primary disabled:opacity-50"
                 >
                   {testingEmail ? (
                     <>
@@ -977,7 +977,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={() => void loadHistory()}
                 disabled={loadingHistory}
-                className="inline-flex items-center gap-2 rounded-xl border border-fin-border bg-white px-3 py-1.5 text-xs font-medium text-fin-text hover:bg-fin-surface disabled:opacity-50 self-start sm:self-auto text-[#000000]"
+                className="inline-flex items-center gap-2 rounded-xl border border-fin-border bg-[var(--fin-bg-card)] px-3 py-1.5 text-xs font-medium text-fin-text hover:bg-fin-surface disabled:opacity-50 self-start sm:self-auto transition"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${loadingHistory ? 'animate-spin' : ''}`} />
                 Atualizar histórico

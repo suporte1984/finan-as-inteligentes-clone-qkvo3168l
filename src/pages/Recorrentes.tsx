@@ -221,7 +221,7 @@ export default function RecurringPage() {
             <strong className="block text-fin-text font-semibold">
               Automação Diária Ativa (Executa todo dia às 06:15 UTC)
             </strong>
-            <p className="text-[#ffffff]">
+            <p className="text-fin-muted">
               Ao cadastrar uma recorrência (como aluguel, salários ou assinaturas), nosso robô
               inteligente verifica as datas e cria o lançamento correspondente em{' '}
               <strong>Lançamentos</strong> no dia exato do vencimento, com proteção anti-duplicação.

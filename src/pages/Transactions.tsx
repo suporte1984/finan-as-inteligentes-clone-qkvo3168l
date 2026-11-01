@@ -51,9 +51,10 @@ import {
 import type { Transaction, TransactionType } from '@/types/finance'
 import { cn } from '@/lib/utils'
 
-const PAGE_SIZE = 10
-
 type Tab = 'todas' | 'receita' | 'despesa'
+export type PageSizeOption = 20 | 50 | 100 | 'todos'
+
+const DEFAULT_PAGE_SIZE: PageSizeOption = 20
 
 export default function TransactionsPage() {
   const { accounts, categories } = useFinance()
@@ -61,10 +62,14 @@ export default function TransactionsPage() {
   const [params, setParams] = useSearchParams()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Transaction | null>(null)
   const [deleting, setDeleting] = useState<Transaction | null>(null)
   const [previewing, setPreviewing] = useState<Transaction | null>(null)
+
+  // Controle de limite acumulado para "Carregar mais"
+  const [displayLimit, setDisplayLimit] = useState<number>(20)
 
   const tab = (params.get('tipo') as Tab) || 'todas'
   const query = params.get('q') || ''
@@ -76,6 +81,16 @@ export default function TransactionsPage() {
   const sort = params.get('ordem') || '-date'
   const page = Math.max(1, Number(params.get('pagina') || '1'))
   const parentFilter = params.get('parent') || ''
+
+  // Tamanho do lote / modo de exibição configurado na URL ou padrão 20
+  const limitParam = params.get('limite')
+  const pageSize: PageSizeOption = useMemo(() => {
+    if (limitParam === 'todos') return 'todos'
+    if (limitParam === '50') return 50
+    if (limitParam === '100') return 100
+    if (limitParam === '20') return 20
+    return DEFAULT_PAGE_SIZE
+  }, [limitParam])
 
   const reload = useCallback(async () => {
     setLoading(true)
@@ -178,11 +193,44 @@ export default function TransactionsPage() {
       }),
     [filtered, sort],
   )
-  const pages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
-  const visible = sorted.slice(
-    (Math.min(page, pages) - 1) * PAGE_SIZE,
-    Math.min(page, pages) * PAGE_SIZE,
-  )
+
+  // Quando o usuário muda filtros (ou busca, ou lote), reiniciamos o displayLimit acumulado
+  const filterKey = `${tab}|${query}|${category}|${parentFilter}|${account}|${month}|${start}|${end}|${pageSize}`
+  useEffect(() => {
+    const initial = pageSize === 'todos' ? Number.MAX_SAFE_INTEGER : pageSize
+    setDisplayLimit(initial)
+  }, [filterKey, pageSize])
+
+  // Lógica de paginação e "Carregar mais"
+  const batchSize = pageSize === 'todos' ? sorted.length || 20 : pageSize
+  const isCumulativeMode = page === 1
+
+  // Se estiver na página 1, usamos displayLimit para suportar "Carregar mais" continuamente na mesma lista
+  // Se estiver na página 2+, usamos fatia da página tradicional
+  const effectiveBatch = typeof pageSize === 'number' ? pageSize : sorted.length || 20
+  const pages = Math.max(1, Math.ceil(sorted.length / effectiveBatch))
+
+  const visible = useMemo(() => {
+    if (pageSize === 'todos') {
+      return sorted
+    }
+    if (isCumulativeMode) {
+      return sorted.slice(0, displayLimit)
+    }
+    // Paginação tradicional se o usuário navegou para página > 1
+    const p = Math.min(page, pages)
+    return sorted.slice((p - 1) * effectiveBatch, p * effectiveBatch)
+  }, [sorted, pageSize, isCumulativeMode, displayLimit, page, pages, effectiveBatch])
+
+  const canLoadMore = isCumulativeMode && pageSize !== 'todos' && displayLimit < sorted.length
+
+  const handleLoadMore = () => {
+    setLoadingMore(true)
+    setTimeout(() => {
+      setDisplayLimit((prev) => prev + (typeof pageSize === 'number' ? pageSize : 20))
+      setLoadingMore(false)
+    }, 120)
+  }
 
   function updateParam(key: string, value: string) {
     const next = new URLSearchParams(params)
@@ -651,30 +699,117 @@ export default function TransactionsPage() {
             <div className="skeleton h-14 w-full rounded-xl" />
           </div>
         )}
-        {!loading && sorted.length > PAGE_SIZE && (
-          <div className="flex items-center justify-between border-t border-fin-border px-5 py-4 text-xs text-fin-muted">
-            <span>
-              {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sorted.length)} de{' '}
-              {sorted.length}
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                className="rounded-lg border border-fin-border p-2 disabled:opacity-40"
-                disabled={page <= 1}
-                onClick={() => updateParam('pagina', String(page - 1))}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
+        {!loading && sorted.length > 0 && (
+          <div className="flex flex-col gap-4 border-t border-fin-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between text-xs text-fin-muted">
+            <div className="flex flex-wrap items-center gap-3">
               <span>
-                Página {Math.min(page, pages)} de {pages}
+                Exibindo{' '}
+                <strong className="font-semibold text-fin-text dark:text-slate-100">
+                  {visible.length}
+                </strong>{' '}
+                de{' '}
+                <strong className="font-semibold text-fin-text dark:text-slate-100">
+                  {sorted.length}
+                </strong>{' '}
+                {sorted.length === 1 ? 'lançamento' : 'lançamentos'}
               </span>
-              <button
-                className="rounded-lg border border-fin-border p-2 disabled:opacity-40"
-                disabled={page >= pages}
-                onClick={() => updateParam('pagina', String(page + 1))}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
+
+              {/* Seletor de quantidade por lote/página */}
+              <div className="flex items-center gap-1.5 border-l border-fin-border pl-3">
+                <span className="text-[11px] font-medium text-fin-muted dark:text-slate-400">
+                  Exibir:
+                </span>
+                <div className="inline-flex rounded-lg border border-fin-border bg-fin-surface/50 p-0.5 dark:border-white/10 dark:bg-white/5">
+                  {(
+                    [
+                      [20, '20'],
+                      [50, '50'],
+                      [100, '100'],
+                      ['todos', 'Todos'],
+                    ] as [PageSizeOption, string][]
+                  ).map(([opt, label]) => {
+                    const isSelected = pageSize === opt
+                    return (
+                      <button
+                        key={String(opt)}
+                        type="button"
+                        onClick={() => {
+                          const next = new URLSearchParams(params)
+                          if (opt === 20) {
+                            next.delete('limite')
+                          } else {
+                            next.set('limite', String(opt))
+                          }
+                          next.delete('pagina')
+                          setParams(next)
+                        }}
+                        className={cn(
+                          'rounded-md px-2 py-1 text-[11px] font-semibold transition',
+                          isSelected
+                            ? 'bg-fin-primary text-white shadow-xs dark:bg-indigo-600 dark:text-white'
+                            : 'text-fin-muted hover:text-fin-text dark:text-slate-400 dark:hover:text-slate-200',
+                        )}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Ações: Botão Carregar Mais OU Paginação tradicional */}
+            <div className="flex flex-wrap items-center gap-2">
+              {canLoadMore && (
+                <button
+                  type="button"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className="btn-secondary !min-h-[34px] !py-1 !px-3 !text-xs font-semibold hover:border-fin-primary/40 hover:text-fin-primary dark:hover:text-indigo-300"
+                >
+                  {loadingMore ? (
+                    'Carregando...'
+                  ) : (
+                    <>
+                      Carregar mais{' '}
+                      <span className="opacity-80">
+                        (+
+                        {Math.min(
+                          typeof pageSize === 'number' ? pageSize : 20,
+                          sorted.length - visible.length,
+                        )}
+                        )
+                      </span>
+                    </>
+                  )}
+                </button>
+              )}
+
+              {pages > 1 && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    title="Página anterior"
+                    className="rounded-lg border border-fin-border p-1.5 transition hover:bg-fin-surface disabled:opacity-40 dark:border-white/10 dark:hover:bg-white/5"
+                    disabled={page <= 1}
+                    onClick={() => updateParam('pagina', String(page - 1))}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <span className="px-1 text-[11px] font-medium">
+                    {Math.min(page, pages)} / {pages}
+                  </span>
+                  <button
+                    type="button"
+                    title="Próxima página"
+                    className="rounded-lg border border-fin-border p-1.5 transition hover:bg-fin-surface disabled:opacity-40 dark:border-white/10 dark:hover:bg-white/5"
+                    disabled={page >= pages}
+                    onClick={() => updateParam('pagina', String(page + 1))}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

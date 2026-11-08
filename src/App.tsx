@@ -11,6 +11,7 @@ import BillsPage from '@/pages/Bills'
 import CategoriesPage from '@/pages/Categories'
 import ReportsPage from '@/pages/Reports'
 import RecurringPage from '@/pages/Recorrentes'
+import CalendarPage from '@/pages/Calendar'
 import AssistantPage from '@/pages/Assistant'
 import UsersPage from '@/pages/Users'
 import SettingsPage from '@/pages/Settings'
@@ -125,6 +126,7 @@ export default function App() {
               <Route path="lancamentos" element={<TransactionsPage />} />
               <Route path="contas" element={<BillsPage />} />
               <Route path="recorrentes" element={<RecurringPage />} />
+              <Route path="calendario" element={<CalendarPage />} />
               <Route path="categorias" element={<CategoriesPage />} />
               <Route path="relatorios" element={<ReportsPage />} />
               <Route path="assistente" element={<AssistantPage />} />

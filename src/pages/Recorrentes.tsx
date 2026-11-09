@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   CalendarClock,
+  CircleOff,
   Clock,
   Info,
   Loader2,
@@ -34,17 +35,28 @@ import { RecurringModal } from '@/components/finance/RecurringModal'
 import { useFinance } from '@/contexts/FinanceContext'
 import { useRealtime } from '@/hooks/use-realtime'
 import { useToast } from '@/hooks/use-toast'
-import { brl, formatDate } from '@/lib/format'
+import { brl, formatDate, todayInput } from '@/lib/format'
 import {
   deleteRecurringTransaction,
   listRecurringTransactions,
   toggleRecurringActive,
+  updateRecurringTransaction,
   triggerProcessRecurring,
 } from '@/services/recurring'
 import type { RecurringTransaction, TransactionType } from '@/types/finance'
 import { cn } from '@/lib/utils'
 
 type Tab = 'todas' | 'receita' | 'despesa'
+
+export type RecurringStatus = 'ativa' | 'pausada' | 'encerrada'
+
+/** Uma recorrência está "encerrada" quando foi desativada e possui data de término já vencida. */
+export function getRecurringStatus(item: RecurringTransaction): RecurringStatus {
+  if (item.active) return 'ativa'
+  const endYMD = item.end_date?.slice(0, 10) || ''
+  if (endYMD && endYMD <= todayInput()) return 'encerrada'
+  return 'pausada'
+}
 
 export default function RecurringPage() {
   const { categories, accounts } = useFinance()
@@ -55,6 +67,7 @@ export default function RecurringPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<RecurringTransaction | null>(null)
   const [deleting, setDeleting] = useState<RecurringTransaction | null>(null)
+  const [closing, setClosing] = useState<RecurringTransaction | null>(null)
   const [tab, setTab] = useState<Tab>('todas')
   const [query, setQuery] = useState('')
 
@@ -98,7 +111,11 @@ export default function RecurringPage() {
 
   async function handleToggle(item: RecurringTransaction) {
     try {
-      const updated = await toggleRecurringActive(item.id, !item.active)
+      // Ao reativar uma recorrência encerrada, limpa a data de término para voltar a gerar.
+      const updated =
+        getRecurringStatus(item) === 'encerrada' && !item.active
+          ? await updateRecurringTransaction(item.id, { active: true, end_date: '' })
+          : await toggleRecurringActive(item.id, !item.active)
       setRecurrings((curr) => curr.map((r) => (r.id === updated.id ? updated : r)))
       toast({
         title: updated.active ? 'Recorrência ativada' : 'Recorrência pausada',
@@ -130,6 +147,30 @@ export default function RecurringPage() {
       })
     } finally {
       setDeleting(null)
+    }
+  }
+
+  // Encerra a recorrência: desativa e fixa a data de término em hoje, sem apagar o registro.
+  async function confirmClose() {
+    if (!closing) return
+    try {
+      const updated = await updateRecurringTransaction(closing.id, {
+        active: false,
+        end_date: todayInput(),
+      })
+      setRecurrings((curr) => curr.map((r) => (r.id === updated.id ? updated : r)))
+      toast({
+        title: 'Recorrência encerrada',
+        description: 'Ela permanece no histórico, mas não gerará mais lançamentos.',
+      })
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao encerrar',
+        description: 'Não foi possível encerrar a recorrência agora.',
+      })
+    } finally {
+      setClosing(null)
     }
   }
 
@@ -367,6 +408,7 @@ export default function RecurringPage() {
                       setEditing(item)
                       setModalOpen(true)
                     }}
+                    onClose={() => setClosing(item)}
                     onDelete={() => setDeleting(item)}
                   />
                 ))}
@@ -393,6 +435,35 @@ export default function RecurringPage() {
           setEditing(null)
         }}
       />
+
+      {/* Diálogo de confirmação de encerramento */}
+      <AlertDialog
+        open={Boolean(closing)}
+        onOpenChange={(open) => {
+          if (!open) setClosing(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Encerrar recorrência?</AlertDialogTitle>
+            <AlertDialogDescription>
+              A regra automática “{closing?.description}” deixará de gerar novos lançamentos e
+              ficará marcada como <strong>Encerrada</strong> no histórico. Nada é apagado: os
+              lançamentos já criados continuam preservados e você pode reativá-la depois pelo menu
+              de ações.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-fin-warning text-white hover:bg-amber-600"
+              onClick={() => void confirmClose()}
+            >
+              Encerrar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Diálogo de confirmação de exclusão */}
       <AlertDialog
@@ -431,6 +502,7 @@ function RecurringRow({
   accounts,
   onToggle,
   onEdit,
+  onClose,
   onDelete,
 }: {
   item: RecurringTransaction
@@ -438,10 +510,12 @@ function RecurringRow({
   accounts: { id: string; name: string }[]
   onToggle: () => void
   onEdit: () => void
+  onClose: () => void
   onDelete: () => void
 }) {
   const category = categories.find((c) => c.id === item.category) || item.expand?.category
   const account = accounts.find((a) => a.id === item.account) || item.expand?.account
+  const status = getRecurringStatus(item)
 
   // Cálculo da próxima execução prevista no frontend
   const nextRun = useMemo(() => {
@@ -509,21 +583,34 @@ function RecurringRow({
       <td className="px-5 py-4">
         <button
           onClick={onToggle}
-          title={item.active ? 'Clique para pausar' : 'Clique para ativar'}
+          title={
+            status === 'ativa'
+              ? 'Clique para pausar'
+              : status === 'pausada'
+                ? 'Clique para ativar'
+                : 'Recorrência encerrada — reative pelo menu de ações'
+          }
+          disabled={status === 'encerrada'}
           className={cn(
             'fin-badge cursor-pointer transition',
-            item.active
+            status === 'ativa'
               ? 'fin-badge-success hover:opacity-80'
-              : 'fin-badge-neutral hover:opacity-80',
+              : status === 'pausada'
+                ? 'fin-badge-neutral hover:opacity-80'
+                : 'fin-badge-warning hover:opacity-80',
           )}
         >
           <span
             className={cn(
               'h-1.5 w-1.5 rounded-full',
-              item.active ? 'bg-emerald-600' : 'bg-zinc-400',
+              status === 'ativa'
+                ? 'bg-emerald-600'
+                : status === 'pausada'
+                  ? 'bg-zinc-400'
+                  : 'bg-amber-500',
             )}
           />
-          {item.active ? 'Ativa' : 'Pausada'}
+          {status === 'ativa' ? 'Ativa' : status === 'pausada' ? 'Pausada' : 'Encerrada'}
         </button>
       </td>
 
@@ -565,13 +652,15 @@ function RecurringRow({
 
       {/* Próximo lançamento previsto */}
       <td className="px-5 py-4 whitespace-nowrap text-xs">
-        {item.active && nextRun ? (
+        {status === 'ativa' && nextRun ? (
           <span className="inline-flex items-center gap-1 font-medium text-fin-primary">
             <CalendarClock className="h-3.5 w-3.5" />
             {formatDate(nextRun)}
           </span>
         ) : (
-          <span className="text-fin-muted italic">Pausada</span>
+          <span className="text-fin-muted italic">
+            {status === 'encerrada' ? 'Encerrada' : 'Pausada'}
+          </span>
         )}
       </td>
 
@@ -612,10 +701,16 @@ function RecurringRow({
               ) : (
                 <>
                   <Play className="mr-2 h-4 w-4 text-fin-success" />
-                  Ativar recorrência
+                  {status === 'encerrada' ? 'Reativar recorrência' : 'Ativar recorrência'}
                 </>
               )}
             </DropdownMenuItem>
+            {status !== 'encerrada' && (
+              <DropdownMenuItem onClick={onClose} className="text-fin-warning">
+                <CircleOff className="mr-2 h-4 w-4" />
+                Encerrar recorrência
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem className="text-fin-danger" onClick={onDelete}>
               <Trash2 className="mr-2 h-4 w-4" />
               Excluir

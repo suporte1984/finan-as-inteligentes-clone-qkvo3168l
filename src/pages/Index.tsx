@@ -59,6 +59,7 @@ import type {
 } from '@/types/finance'
 import { getSavedReport } from '@/services/reports'
 import { DashboardAiCard } from '@/components/finance/DashboardAiCard'
+import { DashboardCharts } from '@/components/finance/DashboardCharts'
 
 const chartColors = ['#4338CA', '#047857', '#D97706', '#BE123C', '#6D28D9', '#0E7490', '#C2410C']
 
@@ -371,6 +372,9 @@ export default function Index() {
         aiReport={aiReport}
         loadingReport={loadingReport}
       />
+
+      {/* Evolução mensal (6 meses) e top categorias do mês */}
+      <DashboardCharts transactions={transactions} categories={categories} month={month} />
 
       <section className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
         <article className="fin-card animate-fade-up stagger-1 overflow-hidden bg-gradient-to-b from-indigo-50/40 via-[var(--fin-bg-card)] to-[var(--fin-bg-card)] dark:from-indigo-950/20 border-indigo-100 dark:border-white/10 shadow-sm">
